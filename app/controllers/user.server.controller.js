@@ -37,7 +37,10 @@ exports.create = function(req, res){
 };
 
 exports.read = function(req, res){
-    return null;
+    let id = req.params.userId;
+    User.getUser(id, function(result){
+        res.json(result);
+    });
 };
 
 exports.update = function(req, res){
