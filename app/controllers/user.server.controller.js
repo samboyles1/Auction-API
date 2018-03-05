@@ -28,7 +28,8 @@ exports.create = function(req, res){
         [family],
         [email],
         [password]
-    ];
+        ]
+    ;
 
     User.insert(values, function(result){
         res.json(result);
