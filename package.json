@@ -6,6 +6,8 @@
   },
   "dependencies": {
     "body-parser": "^1.17.2",
-    "express": "^4.15.3"
+    "execsql": "0.0.3",
+    "express": "^4.15.3",
+    "mysql": "^2.15.0"
   }
 }
