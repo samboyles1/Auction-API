@@ -1,3 +1,7 @@
+//Tip
+//node validator package for dates
+//validate for things that is consistent with the db
+
 const db = require('./config/db'),
     express = require('./config/express');
 
@@ -9,8 +13,8 @@ db.connect(function(err) {
         console.log('Unable to connect to SQL');
         process.exit(1);
     } else {
-        app.listen(3000, function() {
-            console.log('Listening on port: ' + 3000);
+        app.listen(4941, function() {
+            console.log('Listening on port: ' + 4941);
         });
     }
 });
