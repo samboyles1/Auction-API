@@ -48,9 +48,48 @@ exports.update = function(req, res){
 };
 
 exports.login = function(req, res){
-    return null;
+
+    let user_data = {
+        "username": req.body.username,
+        "email": req.body.email,
+        "password": req.body.password
+    }
+
+    if (user_data['username'] != undefined) {
+        let user = user_data['username'].toString();
+        let password = user_data['password'].toString();
+        console.log("user part");
+        User.userLogin(user, password, 1, function(result){
+            res.json(result);
+        });
+    } else if (user_data['email'] != undefined) {
+        let email = user_data['email'].toString();
+        let password = user_data['password'].toString();
+
+        User.userLogin(email, password, 2, function(result){
+            res.json(result);
+        });
+    } else {
+        res.status(400);
+        res.send('Invalid username/email/password supplied');
+
+    }
 };
 
 exports.logout = function(req, res){
     return null;
+};
+
+exports.reset = function(req, res) {
+
+    User.reset_server(function(result){
+        res.json(result);
+    });
+
+}
+
+exports.resample = function(req, res) {
+    User.repopulate_db(function(result) {
+        res.json(result);
+    });
 };
