@@ -14,7 +14,11 @@ module.exports = function(app){
 
     app.route('/api/reset')
         .post(users.reset)
-
     app.route('/api/resample')
         .post(users.resample)
+
+
+    app.route('/api/auctions')
+        .get(users.view_auctions)
+        .post(users.create_auction)
 };

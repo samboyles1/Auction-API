@@ -5,7 +5,7 @@ const fs = require('fs');
 const reset_database = path.join(__dirname, '../../database/create_database.sql');
 const sql_data = path.join(__dirname, '../../database/sql_data.sql');
 
-exports.insert = function(values, done){
+exports.createUser = function(values, done){
     db.get_pool().query('INSERT INTO auction_user ' +
         '(user_username, user_givenname, user_familyname, user_email, user_password) ' +
         'VALUES (?, ?, ?, ?, ?)', values,
@@ -64,4 +64,14 @@ exports.repopulate_db = function(done){
         };
         done(rows);
     });
+};
+
+exports.createAuction = function(done) {
+};
+
+exports.getAuctions = function(done){
+    db.get_pool().query('SELECT * FROM auction', function(err, rows){
+            if(err) return done(err);
+            done(rows);
+        });
 };

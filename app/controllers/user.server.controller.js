@@ -31,7 +31,7 @@ exports.create = function(req, res){
         ]
     ;
 
-    User.insert(values, function(result){
+    User.createUser(values, function(result){
         res.json(result);
     });
 };
@@ -85,11 +85,22 @@ exports.reset = function(req, res) {
     User.reset_server(function(result){
         res.json(result);
     });
-
-}
+};
 
 exports.resample = function(req, res) {
     User.repopulate_db(function(result) {
+        res.json(result);
+    });
+};
+
+exports.create_auction = function(req, res) {
+    User.createAuction(function(result) {
+        res.json(result);
+    });
+};
+
+exports.view_auctions = function(req, res) {
+    User.getAuctions(function(result) {
         res.json(result);
     });
 };
