@@ -109,7 +109,8 @@ exports.create_auction = function(req, res) {
         "startDateTime": req.body.startDateTime,
         "endDateTime": req.body.endDateTime,
         "reservePrice": req.body.reservePrice,
-        "startingBid": req.body.startingBid
+        "startingBid": req.body.startingBid,
+        "user_id": req.body.user_id
     }
 
     let category = auction_data['categoryId'].toString();
@@ -119,6 +120,7 @@ exports.create_auction = function(req, res) {
     let endTime= auction_data['endDateTime'].toString();
     let reserve = auction_data['reservePrice'].toString();
     let startBid = auction_data['startingBid'].toString();
+    let userId = auction_data['user_id'].toString();
 
     let values = [
         [category],
@@ -127,7 +129,8 @@ exports.create_auction = function(req, res) {
         [startTime],
         [endTime],
         [reserve],
-        [startBid]
+        [startBid],
+        [userId]
     ];
 
     User.createAuction(values, function(result) {

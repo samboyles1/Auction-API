@@ -11,14 +11,13 @@ module.exports = function(app){
     app.route('/api/users/logout')
         .post(users.logout)
 
-
     app.route('/api/reset')
         .post(users.reset)
     app.route('/api/resample')
         .post(users.resample)
 
-
     app.route('/api/auctions')
         .get(users.view_auctions)
         .post(users.create_auction)
+    app.route('/api/auctions/:id')
 };

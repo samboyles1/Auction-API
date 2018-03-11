@@ -107,7 +107,6 @@ exports.userLogout = function(token, done){
             done(rows);
         });
 };
-
 //TODO Why the fk doesnt this work
 exports.reset_server = function(done){
     fs.readFile(reset_database, 'utf8', function(err, data) {
@@ -128,15 +127,18 @@ exports.repopulate_db = function(done){
         done(rows);
     });
 };
-
+//TODO error responses
 exports.createAuction = function(values, done) {
-    //TODO get the user id by making a request for the token
+
+
     db.get_pool().query("INSERT INTO auction " +
-        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?)", values,
-        function(err, result) {
-        if(err) return done(err);
-        done(result);
+        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values, function(err, result) {
+            if(err) return done(err);
+            let auction_id = result.insertId;
+            done({
+                "id":auction_id
+            });
         });
 
 };
