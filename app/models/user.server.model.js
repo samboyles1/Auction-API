@@ -108,17 +108,17 @@ exports.userLogout = function(token, done){
         });
 };
 
-
+//TODO Why the fk doesnt this work
 exports.reset_server = function(done){
-    let query = fs.readFileSync(reset_database, 'utf8');
-    db.get_pool().query(query, function(err, rows){
-        if(err) {
-            return done({"ERROR": "Cannot reset database"});
-        };
-        done(rows);
+    fs.readFile(reset_database, 'utf8', function(err, data) {
+        console.log(data);
+        db.get_pool().query(data, function (err, rows) {
+            if (err) return done({"ERROR": "Cannot reset database"});
+            done(rows);
+        });
     });
 };
-
+//TODO Why the fk doesnt this work either
 exports.repopulate_db = function(done){
     let query = fs.readFileSync(sql_data, 'utf8');
     db.get_pool(query, function(err, rows){
@@ -129,11 +129,20 @@ exports.repopulate_db = function(done){
     });
 };
 
-exports.createAuction = function(done) {
+exports.createAuction = function(values, done) {
+    //TODO get the user id by making a request for the token
+    db.get_pool().query("INSERT INTO auction " +
+        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?)", values,
+        function(err, result) {
+        if(err) return done(err);
+        done(result);
+        });
+
 };
 
 exports.getAuctions = function(done){
-    db.get_pool().query('SELECT * FROM auction', function(err, rows){
+    db.get_pool().query('SELECT * FROM auction ORDER BY auction_startingdate DESC', function(err, rows){
             if(err) return done(err);
             done(rows);
         });

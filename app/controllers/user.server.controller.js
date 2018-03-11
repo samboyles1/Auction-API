@@ -90,7 +90,6 @@ exports.logout = function(req, res){
 };
 
 exports.reset = function(req, res) {
-
     User.reset_server(function(result){
         res.json(result);
     });
@@ -103,7 +102,35 @@ exports.resample = function(req, res) {
 };
 
 exports.create_auction = function(req, res) {
-    User.createAuction(function(result) {
+    let auction_data = {
+        "categoryId":req.body.categoryId,
+        "title":req.body.title,
+        "description": req.body.description,
+        "startDateTime": req.body.startDateTime,
+        "endDateTime": req.body.endDateTime,
+        "reservePrice": req.body.reservePrice,
+        "startingBid": req.body.startingBid
+    }
+
+    let category = auction_data['categoryId'].toString();
+    let title = auction_data['title'].toString();
+    let description = auction_data['description'].toString();
+    let startTime = auction_data['startDateTime'].toString();
+    let endTime= auction_data['endDateTime'].toString();
+    let reserve = auction_data['reservePrice'].toString();
+    let startBid = auction_data['startingBid'].toString();
+
+    let values = [
+        [category],
+        [title],
+        [description],
+        [startTime],
+        [endTime],
+        [reserve],
+        [startBid]
+    ];
+
+    User.createAuction(values, function(result) {
         res.json(result);
     });
 };
