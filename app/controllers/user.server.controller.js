@@ -58,8 +58,8 @@ exports.login = function(req, res){
     if (user_data['username'] != undefined) {
         let user = user_data['username'].toString();
         let password = user_data['password'].toString();
-        console.log("user part");
         User.userLogin(user, password, 1, function(result){
+
             res.json(result);
         });
     } else if (user_data['email'] != undefined) {
@@ -69,15 +69,15 @@ exports.login = function(req, res){
         User.userLogin(email, password, 2, function(result){
             res.json(result);
         });
+
     } else {
         res.status(400);
         res.send('Invalid username/email/password supplied');
-
-    }
+    };
 };
 
 exports.logout = function(req, res){
-    return null;
+    User.userLogout();
 };
 
 exports.reset = function(req, res) {
