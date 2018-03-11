@@ -72,12 +72,21 @@ exports.login = function(req, res){
 
     } else {
         res.status(400);
-        res.send('Invalid username/email/password supplied');
+        res.send("Invalid username/email/password supplied");
     };
 };
 
 exports.logout = function(req, res){
-    User.userLogout();
+    let data = {
+        "token":req.body.token
+    }
+    let token = data['token'].toString();
+    User.userLogout(token, function(result){
+        // TODO Add an unauthorised 401 error
+        res.status(200);
+        res.send("OK");
+
+    });
 };
 
 exports.reset = function(req, res) {

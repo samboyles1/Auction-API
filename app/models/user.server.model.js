@@ -99,8 +99,13 @@ exports.userLogin = function(auth, pass, type, done) {
     };
 };
 
-exports.userLogout = function(done){
+exports.userLogout = function(token, done){
 
+    let query = "UPDATE auction_user SET user_token = NULL WHERE user_id = ?";
+    db.get_pool().query(query, token, function(err, rows) {
+        if (err) return done({"ERROR":"Unauthorized"});
+            done(rows);
+        });
 };
 
 
