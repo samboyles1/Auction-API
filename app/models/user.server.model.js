@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const reset_database = path.join(__dirname, '../../database/create_database.sql');
 const sql_data = path.join(__dirname, '../../database/sql_data.sql');
 
-exports.createUser = function(values, done){
+exports.createUser = function(values, done) {
     db.get_pool().query('INSERT INTO auction_user ' +
         '(user_username, user_givenname, user_familyname, user_email, user_password) ' +
         'VALUES (?, ?, ?, ?, ?)', values,
@@ -16,13 +16,17 @@ exports.createUser = function(values, done){
         });
 };
 
-exports.getUser = function(id, done){
+exports.getUser = function(id, done) {
     db.get_pool().query('SELECT * FROM auction_user WHERE user_id = ?', id,
         function(err, rows){
             if(err) return done(err);
             done(rows);
         });
 };
+//TODO complete update
+exports.updateUser = function(done) {
+    null;
+}
 /*
 Logs the user into the website
 @param auth The email/username supplied by the user
@@ -99,7 +103,7 @@ exports.userLogin = function(auth, pass, type, done) {
     };
 };
 
-exports.userLogout = function(token, done){
+exports.userLogout = function(token, done) {
 
     let query = "UPDATE auction_user SET user_token = NULL WHERE user_id = ?";
     db.get_pool().query(query, token, function(err, rows) {
@@ -123,7 +127,7 @@ exports.reset_server = function(done) {
 };
 
 
-exports.repopulate_db = function(done){
+exports.repopulate_db = function(done) {
     fs.readFile(sql_data, {encoding: 'utf-8'}, function (err, data) {
         if (!err) {
             db.get_pool().query(data, function (err, rows) {
@@ -142,7 +146,7 @@ exports.createAuction = function(values, done) {
     db.get_pool().query("INSERT INTO auction " +
         "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values, function(err, result) {
-            if(err) return done(err);
+            if(err) return done("Malformed auction data");
             let auction_id = result.insertId;
             done({
                 "id":auction_id
@@ -151,9 +155,16 @@ exports.createAuction = function(values, done) {
 
 };
 
-exports.getAuctions = function(done){
+exports.getAuctions = function(done) {
     db.get_pool().query('SELECT * FROM auction ORDER BY auction_startingdate DESC', function(err, rows){
             if(err) return done(err);
             done(rows);
         });
+};
+//TODO return correct json
+exports.getOneAuction = function(id, done) {
+    db.get_pool().query("SELECT * FROM auction WHERE auction_id = ?", id, function(err, rows) {
+        if (err) return done("Not found");
+        done(rows);
+    });
 };

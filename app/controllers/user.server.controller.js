@@ -1,13 +1,13 @@
 const User = require('../models/user.server.model');
 
-exports.list = function(req, res){
+exports.list = function(req, res) {
     User.getAll(function(result){
         res.json(result);
     });
 };
 
 //USERS methods
-exports.create = function(req, res){
+exports.create_user = function(req, res) {
     let user_data = {
         "username": req.body.username,
         "givenName": req.body.givenName,
@@ -36,18 +36,20 @@ exports.create = function(req, res){
     });
 };
 
-exports.read = function(req, res){
+exports.get_user = function(req, res) {
     let id = req.params.userId;
     User.getUser(id, function(result){
         res.json(result);
     });
 };
-
-exports.update = function(req, res){
-    return null;
+//TODO complete update
+exports.update_user = function(req, res) {
+    User.updateUser(function(result) {
+        res.json(result);
+    });
 };
 
-exports.login = function(req, res){
+exports.login = function(req, res) {
 
     let user_data = {
         "username": req.body.username,
@@ -140,6 +142,13 @@ exports.create_auction = function(req, res) {
 
 exports.view_auctions = function(req, res) {
     User.getAuctions(function(result) {
+        res.json(result);
+    });
+};
+
+exports.get_auction = function(req, res) {
+    let id = req.params.id;
+    User.getOneAuction(id, function(result){
         res.json(result);
     });
 };

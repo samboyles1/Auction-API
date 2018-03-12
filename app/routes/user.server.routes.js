@@ -2,10 +2,10 @@ const users = require('../controllers/user.server.controller');
 
 module.exports = function(app){
     app.route('/api/users')
-        .post(users.create);
+        .post(users.create_user);
     app.route('/api/users/:userId')
-        .get(users.read)
-        .patch(users.update)
+        .get(users.get_user)
+        .patch(users.update_user)
     app.route('/api/users/login')
         .post(users.login)
     app.route('/api/users/logout')
@@ -20,4 +20,7 @@ module.exports = function(app){
         .get(users.view_auctions)
         .post(users.create_auction)
     app.route('/api/auctions/:id')
+        .get(users.get_auction)
+    app.route('/api/auctions/:id/bids')
+        .get(users.get_bids)
 };
