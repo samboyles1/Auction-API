@@ -244,5 +244,5 @@ exports.getBids = function(id, done) {
 };
 
 exports.placeBid = function(amount, id, done) {
-
+    null;
 }
