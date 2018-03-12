@@ -107,24 +107,32 @@ exports.userLogout = function(token, done){
             done(rows);
         });
 };
-//TODO Why the fk doesnt this work
-exports.reset_server = function(done){
-    fs.readFile(reset_database, 'utf8', function(err, data) {
-        console.log(data);
-        db.get_pool().query(data, function (err, rows) {
-            if (err) return done({"ERROR": "Cannot reset database"});
-            done(rows);
-        });
+
+exports.reset_server = function(done) {
+
+    fs.readFile(reset_database, {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+            db.get_pool().query(data, function (err, rows) {
+                if (err) return done({"ERROR": "Malformed request."});
+                done('OK');
+            });
+        } else {
+            return done({"ERROR":"Malformed request."});
+        }
     });
 };
-//TODO Why the fk doesnt this work either
+
+
 exports.repopulate_db = function(done){
-    let query = fs.readFileSync(sql_data, 'utf8');
-    db.get_pool(query, function(err, rows){
-        if(err) {
-            return done({"ERROR":"Cannot resample database"});
-        };
-        done(rows);
+    fs.readFile(sql_data, {encoding: 'utf-8'}, function (err, data) {
+        if (!err) {
+            db.get_pool().query(data, function (err, rows) {
+                if (err) return done({"ERROR": "Malformed request."});
+                done('OK');
+            });
+        } else {
+            return done({"ERROR":"Malformed request."});
+        }
     });
 };
 //TODO error responses
