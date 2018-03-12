@@ -126,7 +126,6 @@ exports.reset_server = function(done) {
     });
 };
 
-
 exports.repopulate_db = function(done) {
     fs.readFile(sql_data, {encoding: 'utf-8'}, function (err, data) {
         if (!err) {
@@ -166,5 +165,18 @@ exports.getOneAuction = function(id, done) {
     db.get_pool().query("SELECT * FROM auction WHERE auction_id = ?", id, function(err, rows) {
         if (err) return done("Not found");
         done(rows);
+    });
+};
+
+exports.getBids = function(id, done) {
+    db.get_pool().query("SELECT bid.bid_amount AS amount, bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, " +
+        "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
+        "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
+        if (err) return done("Not found");
+        if (rows.length > 0) {
+            done(rows);
+        } else {
+            return done("Not found");
+        }
     });
 };

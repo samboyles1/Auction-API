@@ -152,3 +152,10 @@ exports.get_auction = function(req, res) {
         res.json(result);
     });
 };
+
+exports.get_bids = function(req, res) {
+    let id = req.params.id;
+    User.getBids(id, function(result) {
+        res.json(result);
+    });
+};
