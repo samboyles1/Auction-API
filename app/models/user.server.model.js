@@ -162,7 +162,17 @@ exports.getAuctions = function(done) {
 };
 //TODO return correct json
 exports.getOneAuction = function(id, done) {
-    db.get_pool().query("SELECT * FROM auction WHERE auction_id = ?", id, function(err, rows) {
+
+    let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
+    "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
+        "auction.auction_description AS description, auction.auction_creationdate AS creationDateTime, auction.auction_primaryphoto_URI AS photoUris," +
+        " auction.auction_userid AS id, auction_user.user_username AS username, bid.bid_amount AS currentBid, bid.bid_amount AS amount," +
+        " bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, auction_user.user_username AS buyerUsername " +
+        "FROM auction LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
+        "LEFT OUTER JOIN category ON auction.auction_categoryid = category.category_id " +
+        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid WHERE auction.auction_id = ?";
+
+    db.get_pool().query(query, id, function(err, rows) {
         if (err) return done("Not found");
         done(rows);
     });
