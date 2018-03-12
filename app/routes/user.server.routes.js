@@ -23,4 +23,5 @@ module.exports = function(app){
         .get(users.get_auction)
     app.route('/api/auctions/:id/bids')
         .get(users.get_bids)
+        .post(users.place_bid)
 };

@@ -140,8 +140,6 @@ exports.repopulate_db = function(done) {
 };
 //TODO error responses
 exports.createAuction = function(values, done) {
-
-
     db.get_pool().query("INSERT INTO auction " +
         "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values, function(err, result) {
@@ -151,7 +149,6 @@ exports.createAuction = function(values, done) {
                 "id":auction_id
             });
         });
-
 };
 
 exports.getAuctions = function(done) {
@@ -160,21 +157,76 @@ exports.getAuctions = function(done) {
             done(rows);
         });
 };
-//TODO return correct json
+//TODO list all bid history
 exports.getOneAuction = function(id, done) {
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
     "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
         "auction.auction_description AS description, auction.auction_creationdate AS creationDateTime, auction.auction_primaryphoto_URI AS photoUris," +
-        " auction.auction_userid AS id, auction_user.user_username AS username, bid.bid_amount AS currentBid, bid.bid_amount AS amount," +
+        " auction.auction_userid AS id, auction_user.user_username AS username, MAX(bid.bid_amount) AS currentBid, bid.bid_amount AS amount," +
         " bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, auction_user.user_username AS buyerUsername " +
         "FROM auction LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
         "LEFT OUTER JOIN category ON auction.auction_categoryid = category.category_id " +
-        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid WHERE auction.auction_id = ?";
-
+        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid " +
+        "WHERE auction.auction_id = ?";
     db.get_pool().query(query, id, function(err, rows) {
         if (err) return done("Not found");
-        done(rows);
+
+        let categoryId = rows[0].categoryId;
+        let categoryTitle = rows[0].categoryTitle;
+        let title = rows[0].title;
+        let reservePrice = rows[0].reservePrice;
+        let startDateTime = rows[0].startDateTime;
+        let endDateTime = rows[0].endDateTime;
+        let description = rows[0].description;
+        let creationDateTime = rows[0].creationDateTime;
+        let photoUris = rows[0].photoUris;
+        let id = rows[0].id;
+        let username = rows[0].username;
+        let currentBid = rows[0].currentBid;
+
+        //TODO retrieve entire bid history to display
+        /*
+        var bids;
+        exports.getBids(id, function(bids){
+            console.log(bids);
+            return (bids);
+        });
+
+        console.log(bids);
+        */
+        let amount = rows[0].amount;
+        let dateTime = rows[0].datetime;
+        let buyerId = rows[0].buyerId;
+        let buyerUsername = rows[0].buyerUsername;
+
+        return done({
+            "categoryId":categoryId,
+            "categoryTitle":categoryTitle,
+            "title":title,
+            "reservePrice":reservePrice,
+            "startDateTime":startDateTime,
+            "endDateTime":endDateTime,
+            "description":description,
+            "creationDateTime":creationDateTime,
+            "photoUris":[
+                photoUris
+            ],
+            "seller":{
+                "id":id,
+                "username":username
+            },
+            "currentBid":currentBid,
+            "bids":
+                [
+                    {
+                        "amount":amount,
+                        "dateTime":dateTime,
+                        "buyerId":buyerId,
+                        "buyerUsername":buyerUsername
+                    }
+                ]
+        });
     });
 };
 
@@ -190,3 +242,7 @@ exports.getBids = function(id, done) {
         }
     });
 };
+
+exports.placeBid = function(amount, id, done) {
+
+}

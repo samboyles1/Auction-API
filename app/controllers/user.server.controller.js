@@ -102,7 +102,7 @@ exports.resample = function(req, res) {
         res.json(result);
     });
 };
-
+//TODO error message
 exports.create_auction = function(req, res) {
     let auction_data = {
         "categoryId":req.body.categoryId,
@@ -136,7 +136,13 @@ exports.create_auction = function(req, res) {
     ];
 
     User.createAuction(values, function(result) {
-        res.json(result);
+        if (result === "Malformed auction data") {
+            res.status(400);
+            res.send(result);
+        } else {
+            res.status(200);
+            res.json(result);
+        }
     });
 };
 
@@ -156,6 +162,19 @@ exports.get_auction = function(req, res) {
 exports.get_bids = function(req, res) {
     let id = req.params.id;
     User.getBids(id, function(result) {
+        res.json(result);
+    });
+};
+
+exports.place_bid = function(req, res) {
+    let bid_data = {
+        "amount":req.body.amount,
+        "id":req.body.id
+    };
+    let amount = bid_data['amount'].toString();
+    let id = bid_data['id'].toString();
+
+    User.placeBid(amount, id, function(result){
         res.json(result);
     });
 };
