@@ -1,5 +1,7 @@
 const User = require('../models/user.server.model');
 
+exports.userLoginToken = '';
+
 exports.list = function(req, res) {
     User.getAll(function(result){
         res.json(result);
@@ -61,7 +63,8 @@ exports.login = function(req, res) {
         let user = user_data['username'].toString();
         let password = user_data['password'].toString();
         User.userLogin(user, password, 1, function(result){
-
+            userLoginToken = result['token'];
+            console.log(userLoginToken);
             res.json(result);
         });
     } else if (user_data['email'] != undefined) {
@@ -69,6 +72,8 @@ exports.login = function(req, res) {
         let password = user_data['password'].toString();
 
         User.userLogin(email, password, 2, function(result){
+            userLoginToken = result['token'];
+            console.log(userLoginToken);
             res.json(result);
         });
 
@@ -77,8 +82,9 @@ exports.login = function(req, res) {
         res.send("Invalid username/email/password supplied");
     };
 };
-
+//TODO somehow store token
 exports.logout = function(req, res){
+    userLoginToken
     let data = {
         "token":req.body.token
     }
@@ -167,6 +173,7 @@ exports.get_bids = function(req, res) {
 };
 
 exports.place_bid = function(req, res) {
+    console.log(userLoginToken);
     let bid_data = {
         "amount":req.body.amount,
         "id":req.body.id
@@ -174,7 +181,7 @@ exports.place_bid = function(req, res) {
     let amount = bid_data['amount'].toString();
     let id = bid_data['id'].toString();
 
-    User.placeBid(amount, id, function(result){
+    User.placeBid(amount, id, userLoginToken, function(result){
         res.json(result);
     });
 };

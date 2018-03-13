@@ -243,6 +243,12 @@ exports.getBids = function(id, done) {
     });
 };
 
-exports.placeBid = function(amount, id, done) {
-    null;
-}
+
+exports.placeBid = function(amount, id, token, done) {
+    let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?))";
+    db.get_pool().query(query, [amount, id, token], function(err, rows) {
+        if (err) return done("Error: Not found");
+        done(rows);
+    });
+
+};
