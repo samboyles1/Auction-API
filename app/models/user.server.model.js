@@ -23,10 +23,19 @@ exports.getUser = function(id, done) {
             done(rows);
         });
 };
+
+
+
 //TODO complete update
-exports.updateUser = function(done) {
-    null;
-}
+exports.updateUser = function(id, values, done) {
+    let query = "UPDATE auction_user SET ? WHERE user_id = ?";
+    db.get_pool().query(query, values, id, function(err, rows){
+        if(err) return done(err);
+        done(rows);
+    });
+};
+
+
 /*
 Logs the user into the website
 @param auth The email/username supplied by the user

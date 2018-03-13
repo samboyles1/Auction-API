@@ -5,23 +5,23 @@ module.exports = function(app){
         .post(users.create_user);
     app.route('/api/users/:userId')
         .get(users.get_user)
-        .patch(users.update_user)
+        .patch(users.update_user);
     app.route('/api/users/login')
-        .post(users.login)
+        .post(users.login);
     app.route('/api/users/logout')
-        .post(users.logout)
+        .post(users.logout);
 
     app.route('/api/reset')
-        .post(users.reset)
+        .post(users.reset);
     app.route('/api/resample')
-        .post(users.resample)
+        .post(users.resample);
 
     app.route('/api/auctions')
         .get(users.view_auctions)
-        .post(users.create_auction)
+        .post(users.create_auction);
     app.route('/api/auctions/:id')
-        .get(users.get_auction)
+        .get(users.get_auction);
     app.route('/api/auctions/:id/bids')
         .get(users.get_bids)
-        .post(users.place_bid)
+        .post(users.place_bid);
 };

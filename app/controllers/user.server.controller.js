@@ -46,7 +46,17 @@ exports.get_user = function(req, res) {
 };
 //TODO complete update
 exports.update_user = function(req, res) {
-    User.updateUser(function(result) {
+    let id = req.params.userId;
+    let params = req.body;
+    let rows = [];
+    let str = ""
+    for (var i in params) {
+        let string = (i + ' = "' + params[i] + '",');
+        str = str.concat(string);
+    }
+    str = str.substring(0, str.length-1);
+
+    User.updateUser(id, str, function(result) {
         res.json(result);
     });
 };
