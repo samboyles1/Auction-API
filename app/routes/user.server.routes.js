@@ -20,7 +20,8 @@ module.exports = function(app){
         .get(users.view_auctions)
         .post(users.create_auction);
     app.route('/api/auctions/:id')
-        .get(users.get_auction);
+        .get(users.get_auction)
+        .patch(users.update_auction);
     app.route('/api/auctions/:id/bids')
         .get(users.get_bids)
         .post(users.place_bid);

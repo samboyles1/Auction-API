@@ -48,8 +48,8 @@ exports.get_user = function(req, res) {
 exports.update_user = function(req, res) {
     let id = req.params.userId;
     let params = req.body;
-    let str = ""
-    for (var i in params) {
+    let str = "";
+    for (let i in params) {
         let string = (i + ' = "' + params[i] + '",');
         str = str.concat(string);
     }
@@ -165,6 +165,26 @@ exports.create_auction = function(req, res) {
         }
     });
 };
+
+exports.update_auction = function(req, res) {
+    let id = req.params.id;
+    let params = req.body;
+    let str = "";
+    for (let i in params) {
+        let string = (i + ' = "' + params[i] + '",');
+        str = str.concat(string);
+    }
+    str = str.substring(0, str.length-1);
+
+    User.updateAuction(id, str, function(result) {
+        if (result === "Unauthorized") {
+            res.status(401);
+            res.json(result);
+        }
+        res.status(200);
+        res.json(result);
+    });
+}
 
 exports.view_auctions = function(req, res) {
     User.getAuctions(function(result) {

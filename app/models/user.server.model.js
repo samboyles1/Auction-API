@@ -1,3 +1,5 @@
+//TODO all error codes
+
 const db = require('../../config/db');
 const path = require('path');
 const fs = require('fs');
@@ -24,9 +26,6 @@ exports.getUser = function(id, done) {
         });
 };
 
-
-
-
 exports.updateUser = function(id, values, done) {
     console.log(values);
     let query = "UPDATE auction_user SET " + values + " WHERE user_id = ?";
@@ -36,8 +35,6 @@ exports.updateUser = function(id, values, done) {
         done("OK");
     });
 };
-
-
 /*
 Logs the user into the website
 @param auth The email/username supplied by the user
@@ -162,6 +159,14 @@ exports.createAuction = function(values, done) {
         });
 };
 
+exports.updateAuction = function(id, values, done) {
+    let query = "UPDATE auction SET " + values + "WHERE auction_id = ?"
+    db.get_pool().query(query, id, function(err, rows){
+        if (err) return done(err);
+        done(rows);
+    });
+};
+
 exports.getAuctions = function(done) {
     db.get_pool().query('SELECT * FROM auction ORDER BY auction_startingdate DESC', function(err, rows){
             if(err) return done(err);
@@ -253,7 +258,6 @@ exports.getBids = function(id, done) {
         }
     });
 };
-
 
 exports.placeBid = function(amount, id, token, done) {
     let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?))";
