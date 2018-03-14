@@ -44,11 +44,10 @@ exports.get_user = function(req, res) {
         res.json(result);
     });
 };
-//TODO complete update
+
 exports.update_user = function(req, res) {
     let id = req.params.userId;
     let params = req.body;
-    let rows = [];
     let str = ""
     for (var i in params) {
         let string = (i + ' = "' + params[i] + '",');
@@ -57,6 +56,11 @@ exports.update_user = function(req, res) {
     str = str.substring(0, str.length-1);
 
     User.updateUser(id, str, function(result) {
+        if (result === "Unauthorized") {
+            res.status(401);
+            res.json(result);
+        }
+        res.status(200);
         res.json(result);
     });
 };
