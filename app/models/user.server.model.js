@@ -1,4 +1,5 @@
 //TODO all error codes
+//todo login function has error codes work
 
 const db = require('../../config/db');
 const path = require('path');
@@ -13,8 +14,8 @@ exports.createUser = function(values, done) {
         '(user_username, user_givenname, user_familyname, user_email, user_password) ' +
         'VALUES (?, ?, ?, ?, ?)', values,
         function(err, result) {
-            if(err) return done(err);
-            done(result);
+            if(err) return done(400);
+            done(201);
         });
 };
 

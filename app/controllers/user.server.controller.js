@@ -34,7 +34,7 @@ exports.create_user = function(req, res) {
     ;
 
     User.createUser(values, function(result){
-        res.json(result);
+        res.sendStatus(result);
     });
 };
 
@@ -96,17 +96,21 @@ exports.login = function(req, res) {
         res.send("Invalid username/email/password supplied");
     };
 };
-//TODO somehow store token
+//TODO workout why userlogout token is here
 exports.logout = function(req, res){
-    userLoginToken
+
     let data = {
-        "token":req.body.token
-    }
+        "token":userLoginToken
+    };
     let token = data['token'].toString();
+    console.log(token);
     User.userLogout(token, function(result){
-        // TODO Add an unauthorised 401 error
-        res.status(200);
-        res.send("OK");
+        if (result.ERROR === "Unauthorized"){
+            res.sendStatus(401)
+        } else {
+            userLoginToken = '';
+            res.sendStatus(200)
+        }
 
     });
 };
@@ -122,7 +126,7 @@ exports.resample = function(req, res) {
         res.json(result);
     });
 };
-//TODO error message
+
 exports.create_auction = function(req, res) {
     let auction_data = {
         "categoryId":req.body.categoryId,

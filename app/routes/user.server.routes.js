@@ -25,4 +25,9 @@ module.exports = function(app){
     app.route('/api/auctions/:id/bids')
         .get(users.get_bids)
         .post(users.place_bid);
+
+    app.route('/api/auctions/:id/photos')
+        //.get(users.get_photos)
+        //.post(users.add_photo)
+
 };
