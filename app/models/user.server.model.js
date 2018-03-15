@@ -323,7 +323,7 @@ exports.getPhoto = function(id, done) {
 };
 
 exports.addPhoto = function(done) {
-
+    let query = "INSERT INTO photos";
 };
 
 exports.deletePhoto = function(done) {

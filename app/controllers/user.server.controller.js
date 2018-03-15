@@ -253,7 +253,10 @@ exports.get_photos = function(req, res) {
 };
 
 exports.add_photo = function(req, res) {
-
+    let id = req.params.id;
+    User.addPhoto(id, function(result){
+        res.sendStatus(result);
+    });
 };
 
 exports.delete_photo = function(req, res) {
