@@ -15,25 +15,38 @@ exports.createUser = function(values, done) {
         'VALUES (?, ?, ?, ?, ?)', values,
         function(err, result) {
             if(err) return done(400);
-            done(201);
+            done(result);
         });
 };
-
+//todo return accbal and email if its own user id
 exports.getUser = function(id, done) {
     db.get_pool().query('SELECT * FROM auction_user WHERE user_id = ?', id,
         function(err, rows){
-            if(err) return done(err);
-            done(rows);
+            if(err) return done(404);
+            console.log(rows.length);
+            if (rows.length > 0) {
+                return done({
+                    "user_id":rows[0].user_id,
+                    "user_username":rows[0].user_username,
+                    "user_givenname":rows[0].user_givenname,
+                    "user_familyname":rows[0].user_familyname
+                });
+            } else {
+                return done(404);
+            }
         });
 };
 
 exports.updateUser = function(id, values, done) {
-    console.log(values);
     let query = "UPDATE auction_user SET " + values + " WHERE user_id = ?";
-    console.log(query);
     db.get_pool().query(query, id, function(err, rows){
-        if(err) return done("Unauthorized");
-        done("OK");
+        if(err) return done(401);
+        if (rows.affectedRows === 1){
+            done(201)
+        } else{
+            done(401);
+        }
+
     });
 };
 /*
@@ -77,7 +90,7 @@ exports.userLogin = function(auth, pass, type, done) {
     if (type === 1) {
         db.get_pool().query('SELECT * FROM auction_user WHERE user_username = ? and user_password = ?', [auth, pass], function(err, rows) {
             if (err) {
-                return done({"ERROR":"Invalid username/email/password supplied"});
+                return done(400);
             };
 
             if (rows.length > 0) {
@@ -89,13 +102,13 @@ exports.userLogin = function(auth, pass, type, done) {
                     "id": userid,
                     "token": token
                 });
-            };
+            } else return done(400);
         });
 
     } else if (type === 2) {
         db.get_pool().query('SELECT * FROM auction_user WHERE user_email = ? and user_password = ?', [auth, pass], function(err, rows) {
             if (err) {
-                return done({"ERROR": "Invalid username/email/password supplied"});
+                return done(400);
             }
 
             if (rows.length > 0) {
@@ -107,17 +120,17 @@ exports.userLogin = function(auth, pass, type, done) {
                     "id": userid,
                     "token": token
                 });
-            };
+            } else return done(400);
         });
-    };
+    }
 };
 
 exports.userLogout = function(token, done) {
 
-    let query = "UPDATE auction_user SET user_token = NULL WHERE user_id = ?";
+    let query = "UPDATE auction_user SET user_token = NULL WHERE user_token = ?";
     db.get_pool().query(query, token, function(err, rows) {
         if (err) return done({"ERROR":"Unauthorized"});
-            done(rows);
+            done(200);
         });
 };
 
@@ -126,11 +139,11 @@ exports.reset_server = function(done) {
     fs.readFile(reset_database, {encoding: 'utf-8'}, function (err, data) {
         if (!err) {
             db.get_pool().query(data, function (err, rows) {
-                if (err) return done({"ERROR": "Malformed request."});
-                done('OK');
+                if (err) return done(500);
+                done(200);
             });
         } else {
-            return done({"ERROR":"Malformed request."});
+            return done(400);
         }
     });
 };
@@ -139,20 +152,21 @@ exports.repopulate_db = function(done) {
     fs.readFile(sql_data, {encoding: 'utf-8'}, function (err, data) {
         if (!err) {
             db.get_pool().query(data, function (err, rows) {
-                if (err) return done({"ERROR": "Malformed request."});
-                done('OK');
+                if (err) return done(500);
+                done(200);
             });
         } else {
-            return done({"ERROR":"Malformed request."});
+            return done(400);
         }
     });
 };
-//TODO error responses
+//TODO error responses Unauthorized 401 403(is it if theyre not logged in?)
 exports.createAuction = function(values, done) {
+
     db.get_pool().query("INSERT INTO auction " +
         "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values, function(err, result) {
-            if(err) return done("Malformed auction data");
+            if(err) return done(500);
             let auction_id = result.insertId;
             done({
                 "id":auction_id
@@ -161,13 +175,24 @@ exports.createAuction = function(values, done) {
 };
 
 exports.updateAuction = function(id, values, done) {
-    let query = "UPDATE auction SET " + values + "WHERE auction_id = ?"
-    db.get_pool().query(query, id, function(err, rows){
-        if (err) return done(err);
-        done(rows);
+    db.get_pool().query("SELECT * FROM auction WHERE auction_id = ?", id, function(err, result){
+        if(err) {
+            return done(500);
+        } else if(!result.length) {
+            return done(404);
+        } else {
+            let query = "UPDATE auction SET " + values + "WHERE auction_id = ?"
+            db.get_pool().query(query, id, function(err, rows){
+                if (err) return done(500);
+                done(201);
+            });
+        }
     });
-};
 
+
+
+};
+//TODO updated api for get auctions, rewrite
 exports.getAuctions = function(done) {
     db.get_pool().query('SELECT * FROM auction ORDER BY auction_startingdate DESC', function(err, rows){
             if(err) return done(err);

@@ -1,14 +1,8 @@
 const User = require('../models/user.server.model');
 
-exports.userLoginToken = '';
-
-exports.list = function(req, res) {
-    User.getAll(function(result){
-        res.json(result);
-    });
-};
-
 //USERS methods
+
+//done error code
 exports.create_user = function(req, res) {
     let user_data = {
         "username": req.body.username,
@@ -34,17 +28,32 @@ exports.create_user = function(req, res) {
     ;
 
     User.createUser(values, function(result){
-        res.sendStatus(result);
+        if (result === 400) {
+            res.statusMessage = "Malformed request";
+            res.send(result, "Malformed request");
+        } else {
+            res.status(201);
+            res.json({
+                "id": result['insertId']
+            });
+        }
+
+
     });
 };
-
+//done error code
 exports.get_user = function(req, res) {
     let id = req.params.userId;
     User.getUser(id, function(result){
-        res.json(result);
+        if (result === 404) {
+            res.sendStatus(404);
+        } else {
+            res.json(result);
+        }
+
     });
 };
-
+//done error code
 exports.update_user = function(req, res) {
     let id = req.params.userId;
     let params = req.body;
@@ -56,15 +65,15 @@ exports.update_user = function(req, res) {
     str = str.substring(0, str.length-1);
 
     User.updateUser(id, str, function(result) {
-        if (result === "Unauthorized") {
-            res.status(401);
-            res.json(result);
+        if (result === 201) {
+            res.status(result).send("OK");
+
+        } else {
+            res.status(result).send("Unauthorized");
         }
-        res.status(200);
-        res.json(result);
     });
 };
-
+//done error code
 exports.login = function(req, res) {
 
     let user_data = {
@@ -77,18 +86,24 @@ exports.login = function(req, res) {
         let user = user_data['username'].toString();
         let password = user_data['password'].toString();
         User.userLogin(user, password, 1, function(result){
-            userLoginToken = result['token'];
-            console.log(userLoginToken);
-            res.json(result);
+            if(result === 400) {
+                res.status(result).send("Invalid username/email/password supplied")
+            } else {
+                res.json(result);
+            }
+
+
         });
     } else if (user_data['email'] != undefined) {
         let email = user_data['email'].toString();
         let password = user_data['password'].toString();
 
         User.userLogin(email, password, 2, function(result){
-            userLoginToken = result['token'];
-            console.log(userLoginToken);
-            res.json(result);
+            if(result === 400) {
+                res.status(result).send("Invalid username/email/password supplied")
+            } else {
+                res.json(result);
+            }
         });
 
     } else {
@@ -96,20 +111,14 @@ exports.login = function(req, res) {
         res.send("Invalid username/email/password supplied");
     };
 };
-//TODO workout why userlogout token is here
-exports.logout = function(req, res){
 
-    let data = {
-        "token":userLoginToken
-    };
-    let token = data['token'].toString();
-    console.log(token);
+exports.logout = function(req, res){
+    let token = req.get('X-Authorization');
     User.userLogout(token, function(result){
         if (result.ERROR === "Unauthorized"){
-            res.sendStatus(401)
+            res.sendStatus(401);
         } else {
-            userLoginToken = '';
-            res.sendStatus(200)
+            res.sendStatus(200);
         }
 
     });
@@ -117,13 +126,14 @@ exports.logout = function(req, res){
 
 exports.reset = function(req, res) {
     User.reset_server(function(result){
-        res.json(result);
+        res.sendStatus(result);
+
     });
 };
 
 exports.resample = function(req, res) {
     User.repopulate_db(function(result) {
-        res.json(result);
+        res.sendStatus(result);
     });
 };
 
@@ -160,12 +170,11 @@ exports.create_auction = function(req, res) {
     ];
 
     User.createAuction(values, function(result) {
-        if (result === "Malformed auction data") {
-            res.status(400);
-            res.send(result);
-        } else {
-            res.status(200);
+        if (result['id']) {
             res.json(result);
+        } else {
+            res.sendStatus(result);
+
         }
     });
 };
@@ -181,14 +190,16 @@ exports.update_auction = function(req, res) {
     str = str.substring(0, str.length-1);
 
     User.updateAuction(id, str, function(result) {
-        if (result === "Unauthorized") {
-            res.status(401);
-            res.json(result);
-        }
-        res.status(200);
-        res.json(result);
+        console.log(result);
+        if (result === 201) {
+            return res.status(result).send('OK');
+
+        } else if (result === 404) {
+            return res.status(result).send('Not found');
+        } else res.sendStatus(400);
+
     });
-}
+};
 
 exports.view_auctions = function(req, res) {
     User.getAuctions(function(result) {
@@ -211,7 +222,6 @@ exports.get_bids = function(req, res) {
 };
 
 exports.place_bid = function(req, res) {
-    console.log(userLoginToken);
     let bid_data = {
         "amount":req.body.amount,
         "id":req.body.id
