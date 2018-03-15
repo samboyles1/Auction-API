@@ -308,3 +308,25 @@ exports.placeBid = function(amount, id, token, done) {
     });
 
 };
+//Todo doesnt work on auction not existing - implement
+exports.getPhoto = function(id, done) {
+    let query = "SELECT auction_primaryphoto_URI FROM auction WHERE auction_id = ?";
+    db.get_pool().query(query, id, function(err, rows) {
+        if(err) {
+            return done(500);
+        } else if (rows === []) { ///todo here
+            return done(400);
+        } else if(rows[0].auction_primaryphoto_URI === null) {
+            return done(404);
+        } else return done(rows);
+    });
+};
+
+exports.addPhoto = function(done) {
+
+};
+
+exports.deletePhoto = function(done) {
+
+};
+

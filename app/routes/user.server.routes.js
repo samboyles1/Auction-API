@@ -27,7 +27,8 @@ module.exports = function(app){
         .post(users.place_bid);
 
     app.route('/api/auctions/:id/photos')
-        //.get(users.get_photos)
-        //.post(users.add_photo)
+        .get(users.get_photos)
+        .post(users.add_photo)
+        .delete(users.delete_photo);
 
 };

@@ -243,3 +243,19 @@ exports.place_bid = function(req, res) {
         } else res.sendStatus(result);
     });
 };
+
+exports.get_photos = function(req, res) {
+    let id = req.params.id;
+    console.log(id);
+    User.getPhoto(id, function(result){
+        res.sendStatus(result);
+    });
+};
+
+exports.add_photo = function(req, res) {
+
+};
+
+exports.delete_photo = function(req, res) {
+
+};
