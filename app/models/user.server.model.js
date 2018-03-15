@@ -129,21 +129,24 @@ exports.userLogout = function(token, done) {
 
     let query = "UPDATE auction_user SET user_token = NULL WHERE user_token = ?";
     db.get_pool().query(query, token, function(err, rows) {
-        if (err) return done({"ERROR":"Unauthorized"});
-            done(200);
-        });
+        if (err) return done(401);
+        if (rows.affectedRows === 1){
+            done(200)
+        } else {
+            done(401);
+        }
+    });
 };
 
 exports.reset_server = function(done) {
-
     fs.readFile(reset_database, {encoding: 'utf-8'}, function (err, data) {
         if (!err) {
-            db.get_pool().query(data, function (err, rows) {
-                if (err) return done(500);
+            db.get_pool().query(data, function(err, rows){
+                if(err) return done(500);
                 done(200);
             });
         } else {
-            return done(400);
+            done(400);
         }
     });
 };
@@ -153,7 +156,7 @@ exports.repopulate_db = function(done) {
         if (!err) {
             db.get_pool().query(data, function (err, rows) {
                 if (err) return done(500);
-                done(200);
+                done(201);
             });
         } else {
             return done(400);
@@ -173,15 +176,19 @@ exports.createAuction = function(values, done) {
             });
         });
 };
-
+//TODO error response 401
 exports.updateAuction = function(id, values, done) {
-    db.get_pool().query("SELECT * FROM auction WHERE auction_id = ?", id, function(err, result){
+    //Check if auction exists and if bidding has started
+    db.get_pool().query("SELECT auction.*, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", id, function(err, result){
         if(err) {
             return done(500);
         } else if(!result.length) {
             return done(404);
+        } else if(result[0].num_bids > 0){
+            return done(403);
         } else {
-            let query = "UPDATE auction SET " + values + "WHERE auction_id = ?"
+
+            let query = "UPDATE auction SET " + values + "WHERE auction_id = ?";
             db.get_pool().query(query, id, function(err, rows){
                 if (err) return done(500);
                 done(201);
@@ -200,6 +207,7 @@ exports.getAuctions = function(done) {
         });
 };
 //TODO list all bid history
+//TODO 401 unauthorized
 exports.getOneAuction = function(id, done) {
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
@@ -212,7 +220,10 @@ exports.getOneAuction = function(id, done) {
         "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid " +
         "WHERE auction.auction_id = ?";
     db.get_pool().query(query, id, function(err, rows) {
-        if (err) return done("Not found");
+        if (err) return done(500);
+        if (rows[0].categoryId === null) {
+            return done(404);
+        }
 
         let categoryId = rows[0].categoryId;
         let categoryTitle = rows[0].categoryTitle;
@@ -276,20 +287,24 @@ exports.getBids = function(id, done) {
     db.get_pool().query("SELECT bid.bid_amount AS amount, bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, " +
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
-        if (err) return done("Not found");
+        if (err) return done(500);
+        console.log(rows);
         if (rows.length > 0) {
             done(rows);
         } else {
-            return done("Not found");
+            return done(404);
         }
     });
 };
 
+//TODO implement 400 bad request and checking for if bid is valid
 exports.placeBid = function(amount, id, token, done) {
     let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?))";
     db.get_pool().query(query, [amount, id, token], function(err, rows) {
-        if (err) return done("Error: Not found");
-        done(rows);
+        if (err) return done(500);
+        if(rows.affectedRows === 0) {
+            return done(404);
+        } else done(201);
     });
 
 };

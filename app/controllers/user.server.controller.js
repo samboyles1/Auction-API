@@ -111,31 +111,31 @@ exports.login = function(req, res) {
         res.send("Invalid username/email/password supplied");
     };
 };
-
+//done error code
 exports.logout = function(req, res){
     let token = req.get('X-Authorization');
     User.userLogout(token, function(result){
-        if (result.ERROR === "Unauthorized"){
-            res.sendStatus(401);
-        } else {
-            res.sendStatus(200);
-        }
+        res.sendStatus(result);
 
     });
 };
-
+//done error code
 exports.reset = function(req, res) {
     User.reset_server(function(result){
         res.sendStatus(result);
-
     });
 };
-
+//done error code
 exports.resample = function(req, res) {
     User.repopulate_db(function(result) {
-        res.sendStatus(result);
+        if (result === 201) {
+            res.status(result).send("Sample of data has been reloaded.")
+        } else {
+            res.sendStatus(result);
+        }
     });
 };
+//TODO godda fix this
 
 exports.create_auction = function(req, res) {
     let auction_data = {
@@ -178,7 +178,7 @@ exports.create_auction = function(req, res) {
         }
     });
 };
-
+//done error code
 exports.update_auction = function(req, res) {
     let id = req.params.id;
     let params = req.body;
@@ -190,37 +190,45 @@ exports.update_auction = function(req, res) {
     str = str.substring(0, str.length-1);
 
     User.updateAuction(id, str, function(result) {
-        console.log(result);
+
         if (result === 201) {
             return res.status(result).send('OK');
-
+        } else if (result === 403){
+            return res.status(result).send("Forbidden - bidding has begun on the auction.")
         } else if (result === 404) {
-            return res.status(result).send('Not found');
-        } else res.sendStatus(400);
+            return res.status(result).send('Not found.');
+        } else res.sendStatus(result);
 
     });
 };
-
+//done
 exports.view_auctions = function(req, res) {
     User.getAuctions(function(result) {
-        res.json(result);
+
+        if (result === 400 || result === 401 || result === 404 || result === 500) {
+            res.sendStatus(result);
+        } else res.json(result);
     });
 };
-
+//done
 exports.get_auction = function(req, res) {
     let id = req.params.id;
     User.getOneAuction(id, function(result){
-        res.json(result);
+        if (result === 400 || result === 401 || result === 404 || result === 500){
+            res.sendStatus(result);
+        } else res.json(result);
     });
 };
-
+//done
 exports.get_bids = function(req, res) {
     let id = req.params.id;
     User.getBids(id, function(result) {
-        res.json(result);
+        if (result === 400 || result === 404 || result === 500) {
+            res.sendStatus(result);
+        } else res.json(result);
     });
 };
-
+//done
 exports.place_bid = function(req, res) {
     let bid_data = {
         "amount":req.body.amount,
@@ -228,8 +236,10 @@ exports.place_bid = function(req, res) {
     };
     let amount = bid_data['amount'].toString();
     let id = bid_data['id'].toString();
-
-    User.placeBid(amount, id, userLoginToken, function(result){
-        res.json(result);
+    let token = req.get('X-Authorization');
+    User.placeBid(amount, id, token, function(result){
+        if (result === 201) {
+            res.status(result).send("OK");
+        } else res.sendStatus(result);
     });
 };
