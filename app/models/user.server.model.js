@@ -208,6 +208,7 @@ exports.getAuctions = function(done) {
 };
 //TODO list all bid history
 //TODO 401 unauthorized
+//todo pass x-auth
 exports.getOneAuction = function(id, done) {
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
@@ -329,4 +330,16 @@ exports.addPhoto = function(done) {
 exports.deletePhoto = function(done) {
 
 };
+//todo not throwing properly
+exports.getIdFromToken = function(token, done) {
+    let query = 'SELECT user_id FROM auction_user WHERE user_token = ?';
+    db.get_pool().query(query, token, function(err, rows){
+        if(err) {
+            return done(err);
+        } else if(rows[0]){
+            let user_id = rows[0].user_id;
+            return done(user_id);
+        } else return done(err)
 
+    });
+}
