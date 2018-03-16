@@ -2,12 +2,14 @@
   "name": "SENG365-Auction-Site-API",
   "version": "0.0.1",
   "scripts": {
-    "start": "node app.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "body-parser": "^1.17.2",
     "execsql": "0.0.3",
     "express": "^4.15.3",
-    "mysql": "^2.15.0"
+    "mysql": "^2.15.0",
+    "crypto": "^1.0.1",
+    "fs": "^0.0.1-security"
   }
 }
