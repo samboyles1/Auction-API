@@ -177,6 +177,7 @@ exports.createAuction = function(values, done) {
         });
 };
 //TODO error response 401
+//401 works, unsure if its their own auction
 exports.updateAuction = function(id, values, done) {
     //Check if auction exists and if bidding has started
     db.get_pool().query("SELECT auction.*, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", id, function(err, result){

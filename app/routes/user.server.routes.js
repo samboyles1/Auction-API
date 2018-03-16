@@ -22,7 +22,7 @@ module.exports = function(app){
         .post(users.create_auction);
     app.route('/api/v1/auctions/:id')
         .get(users.get_auction)
-        .patch(users.update_auction);
+        .patch(auth.isAuthenticated, users.update_auction);
     app.route('/api/v1/auctions/:id/bids')
         .get(users.get_bids)
         .post(users.place_bid);
