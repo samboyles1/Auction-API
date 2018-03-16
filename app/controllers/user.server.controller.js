@@ -2,7 +2,7 @@ const User = require('../models/user.server.model');
 
 //USERS methods
 
-//done error code
+
 exports.create_user = function(req, res) {
     let user_data = {
         "username": req.body.username,
@@ -41,7 +41,7 @@ exports.create_user = function(req, res) {
 
     });
 };
-//done error code
+
 exports.get_user = function(req, res) {
     let id = req.params.userId;
     User.getUser(id, function(result){
@@ -53,7 +53,7 @@ exports.get_user = function(req, res) {
 
     });
 };
-//done error code
+
 exports.update_user = function(req, res) {
     let id = req.params.userId;
     let params = req.body;
@@ -73,7 +73,7 @@ exports.update_user = function(req, res) {
         }
     });
 };
-//done error code
+
 exports.login = function(req, res) {
 
     let user_data = {
@@ -111,7 +111,7 @@ exports.login = function(req, res) {
         res.send("Invalid username/email/password supplied");
     };
 };
-//done error code
+
 exports.logout = function(req, res){
     let token = req.get('X-Authorization');
     User.userLogout(token, function(result){
@@ -119,13 +119,13 @@ exports.logout = function(req, res){
 
     });
 };
-//done error code
+
 exports.reset = function(req, res) {
     User.reset_server(function(result){
         res.sendStatus(result);
     });
 };
-//done error code
+
 exports.resample = function(req, res) {
     User.repopulate_db(function(result) {
         if (result === 201) {
@@ -178,7 +178,7 @@ exports.create_auction = function(req, res) {
         }
     });
 };
-//done error code
+
 exports.update_auction = function(req, res) {
     let id = req.params.id;
     let params = req.body;
@@ -202,6 +202,9 @@ exports.update_auction = function(req, res) {
     });
 };
 //done
+//offset in sql for startindex
+//use startdate
+//use %like%
 exports.view_auctions = function(req, res) {
     User.getAuctions(function(result) {
 
@@ -210,7 +213,7 @@ exports.view_auctions = function(req, res) {
         } else res.json(result);
     });
 };
-//done
+
 exports.get_auction = function(req, res) {
     let id = req.params.id;
     User.getOneAuction(id, function(result){
@@ -219,7 +222,7 @@ exports.get_auction = function(req, res) {
         } else res.json(result);
     });
 };
-//done
+
 exports.get_bids = function(req, res) {
     let id = req.params.id;
     User.getBids(id, function(result) {
@@ -228,7 +231,7 @@ exports.get_bids = function(req, res) {
         } else res.json(result);
     });
 };
-//done
+
 exports.place_bid = function(req, res) {
     let bid_data = {
         "amount":req.body.amount,
@@ -244,6 +247,12 @@ exports.place_bid = function(req, res) {
     });
 };
 
+
+//SEnd image as binary object through postman
+//only one image per auction
+//create /uploads or /photos repo in directory with id of auction i.e 1.png
+//fields will still be in auction db, dont have to use them
+//GET will work by going to /uploads/1.png for auction 1
 exports.get_photos = function(req, res) {
     let id = req.params.id;
     console.log(id);
