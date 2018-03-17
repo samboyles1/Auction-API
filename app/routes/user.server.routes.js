@@ -19,13 +19,13 @@ module.exports = function(app){
 
     app.route('/api/v1/auctions')
         .get(users.view_auctions)
-        .post(users.create_auction);
+        .post(auth.isAuthenticated, users.create_auction);
     app.route('/api/v1/auctions/:id')
         .get(users.get_auction)
         .patch(auth.isAuthenticated, users.update_auction);
     app.route('/api/v1/auctions/:id/bids')
         .get(users.get_bids)
-        .post(users.place_bid);
+        .post(auth.isAuthenticated, users.place_bid);
 
     app.route('/api/v1/auctions/:id/photos')
         .get(users.get_photos)

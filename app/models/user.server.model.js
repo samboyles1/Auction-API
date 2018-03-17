@@ -5,6 +5,7 @@ const db = require('../../config/db');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const auth = require('../../config/auth.js');
 
 const reset_database = path.join(__dirname, '../../database/create_database.sql');
 const sql_data = path.join(__dirname, '../../database/sql_data.sql');
@@ -18,23 +19,79 @@ exports.createUser = function(values, done) {
             done(result);
         });
 };
-//todo return accbal and email if its own user id
-exports.getUser = function(id, done) {
-    db.get_pool().query('SELECT * FROM auction_user WHERE user_id = ?', id,
-        function(err, rows){
-            if(err) return done(404);
-            console.log(rows.length);
-            if (rows.length > 0) {
-                return done({
-                    "user_id":rows[0].user_id,
-                    "user_username":rows[0].user_username,
-                    "user_givenname":rows[0].user_givenname,
-                    "user_familyname":rows[0].user_familyname
+
+exports.getUser = function(id, token, done) {
+
+    let loginQuery = "SELECT user_id FROM auction_user WHERE user_token = ?";
+    db.get_pool().query(loginQuery, token, function(err, rowss) {
+        if (err || rowss.length === 0) {
+
+            db.get_pool().query('SELECT * FROM auction_user WHERE user_id = ?', id,
+                function (err, rows) {
+                    if (err) return done(404);
+                    if (rows.length > 0) {
+
+
+                        return done({
+                            "username": rows[0].user_username,
+                            "givenName": rows[0].user_givenname,
+                            "familyName": rows[0].user_familyname
+                        });
+                    } else {
+                        return done(404);
+                    }
                 });
+
+        } else {
+
+            let userId = rowss[0].user_id;
+
+
+
+            if(userId.toString() === id) {
+
+                db.get_pool().query('SELECT * FROM auction_user WHERE user_id = ?', id,
+                    function (err, rows) {
+                        if (err) return done(404);
+                        if (rows.length > 0) {
+
+
+                            return done({
+                                "username": rows[0].user_username,
+                                "givenName": rows[0].user_givenname,
+                                "familyName": rows[0].user_familyname,
+                                "email": rows[0].user_email,
+                                "accountBalance": rows[0].user_accountbalance
+                            });
+                        } else {
+                            return done(404);
+                        }
+                    });
+
             } else {
-                return done(404);
+                db.get_pool().query('SELECT * FROM auction_user WHERE user_id = ?', id,
+                    function (err, rows) {
+                        if (err) return done(404);
+                        if (rows.length > 0) {
+
+
+                            return done({
+                                "userName": rows[0].user_username,
+                                "givenName": rows[0].user_givenname,
+                                "familyName": rows[0].user_familyname
+                            });
+                        } else {
+                            return done(404);
+                        }
+                    });
+
+
+
+
+
             }
-        });
+        }
+    })
 };
 
 exports.updateUser = function(id, values, done) {
@@ -163,7 +220,7 @@ exports.repopulate_db = function(done) {
         }
     });
 };
-//TODO error responses Unauthorized 401 403(is it if theyre not logged in?)
+//TODO error responses Unauthorized  403(is it if theyre not logged in?)
 exports.createAuction = function(values, done) {
 
     db.get_pool().query("INSERT INTO auction " +

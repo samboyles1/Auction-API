@@ -1,5 +1,5 @@
 const User = require('../models/user.server.model');
-
+//const auth = require('../../config/auth.js');
 //USERS methods
 
 
@@ -44,7 +44,13 @@ exports.create_user = function(req, res) {
 
 exports.get_user = function(req, res) {
     let id = req.params.userId;
-    User.getUser(id, function(result){
+
+
+
+    let token = req.get('X-Authorization');
+
+
+    User.getUser(id, token, function(result){
         if (result === 404) {
             res.sendStatus(404);
         } else {
@@ -82,7 +88,7 @@ exports.login = function(req, res) {
         "password": req.body.password
     }
 
-    if (user_data['username'] != undefined) {
+    if (user_data['username'] !== undefined) {
         let user = user_data['username'].toString();
         let password = user_data['password'].toString();
         User.userLogin(user, password, 1, function(result){
@@ -94,7 +100,7 @@ exports.login = function(req, res) {
 
 
         });
-    } else if (user_data['email'] != undefined) {
+    } else if (user_data['email'] !== undefined) {
         let email = user_data['email'].toString();
         let password = user_data['password'].toString();
 
@@ -231,7 +237,7 @@ exports.get_bids = function(req, res) {
         } else res.json(result);
     });
 };
-
+//TODO bid checking for validity
 exports.place_bid = function(req, res) {
     let bid_data = {
         "amount":req.body.amount,
