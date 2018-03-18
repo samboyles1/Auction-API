@@ -2,54 +2,52 @@ const User = require('../models/user.server.model');
 const fs = require('fs');
 const path = require('path');
 
-//const auth = require('../../config/auth.js');
-//USERS methods
-
-
 exports.create_user = function(req, res) {
-    let user_data = {
-        "username": req.body.username,
-        "givenName": req.body.givenName,
-        "familyName": req.body.familyName,
-        "email": req.body.email,
-        "password": req.body.password
-    };
 
-    let user = user_data['username'].toString();
-    let given = user_data['givenName'].toString();
-    let family = user_data['familyName'].toString();
-    let email = user_data['email'].toString();
-    let password = user_data['password'].toString();
+    try {
+        let user_data = {
+            "username": req.body.username,
+            "givenName": req.body.givenName,
+            "familyName": req.body.familyName,
+            "email": req.body.email,
+            "password": req.body.password
+        };
 
-    let values = [
-        [user],
-        [given],
-        [family],
-        [email],
-        [password]
-        ]
-    ;
+        let user = user_data['username'].toString();
+        let given = user_data['givenName'].toString();
+        let family = user_data['familyName'].toString();
+        let email = user_data['email'].toString();
+        let password = user_data['password'].toString();
 
-    User.createUser(values, function(result){
-        if (result === 400) {
-            res.statusMessage = "Malformed request";
-            res.send(result, "Malformed request");
-        } else {
-            res.status(201);
-            res.json({
-                "id": result['insertId']
-            });
-        }
+        let values = [
+                [user],
+                [given],
+                [family],
+                [email],
+                [password]
+            ]
+        ;
+
+        User.createUser(values, function (result) {
+            if (result === 400) {
+                res.statusMessage = "Malformed request";
+                res.send(result, "Malformed request");
+            } else {
+                res.status(201);
+                res.json({
+                    "id": result['insertId']
+                });
+            }
 
 
-    });
+        });
+    } catch (err) {
+        res.sendStatus(400);
+    }
 };
 
 exports.get_user = function(req, res) {
     let id = req.params.userId;
-
-
-
     let token = req.get('X-Authorization');
 
 
@@ -64,31 +62,36 @@ exports.get_user = function(req, res) {
 };
 
 exports.update_user = function(req, res) {
-    let id = req.params.userId;
-    let params = req.body;
-    let str = "";
-    for (let i in params) {
-        let string = (i + ' = "' + params[i] + '",');
-        str = str.concat(string);
-    }
-    str = str.substring(0, str.length-1);
 
-    User.updateUser(id, str, function(result) {
-        if (result === 201) {
-            res.status(result).send("OK");
-
-        } else {
-            res.status(result).send("Unauthorized");
+    try {
+        let id = req.params.userId;
+        let params = req.body;
+        let str = "";
+        for (let i in params) {
+            let string = (i + ' = "' + params[i] + '",');
+            str = str.concat(string);
         }
-    });
+        str = str.substring(0, str.length - 1);
+
+        User.updateUser(id, str, function (result) {
+            if (result === 201) {
+                res.status(result).send("OK");
+
+            } else {
+                res.status(result).send("Unauthorized");
+            }
+        });
+    } catch (err) {
+        res.sendStatus(401);
+    }
 };
 
 exports.login = function(req, res) {
 
     let user_data = {
-        "username": req.body.username,
-        "email": req.body.email,
-        "password": req.body.password
+        "username": req.query.username,
+        "email": req.query.email,
+        "password": req.query.password
     }
 
     if (user_data['username'] !== undefined) {
@@ -157,7 +160,7 @@ exports.create_auction = function(req, res) {
             "reservePrice": req.body.reservePrice,
             "startingBid": req.body.startingBid,
             "user_id": req.body.user_id
-        }
+        };
         let category = auction_data['categoryId'].toString();
         let title = auction_data['title'].toString();
         let description = auction_data['description'].toString();
@@ -191,26 +194,30 @@ exports.create_auction = function(req, res) {
 };
 
 exports.update_auction = function(req, res) {
-    let id = req.params.id;
-    let params = req.body;
-    let str = "";
-    for (let i in params) {
-        let string = (i + ' = "' + params[i] + '",');
-        str = str.concat(string);
+    try {
+        let id = req.params.id;
+        let params = req.body;
+        let str = "";
+        for (let i in params) {
+            let string = (i + ' = "' + params[i] + '",');
+            str = str.concat(string);
+        }
+        str = str.substring(0, str.length - 1);
+
+        User.updateAuction(id, str, function (result) {
+
+            if (result === 201) {
+                return res.status(result).send('OK');
+            } else if (result === 403) {
+                return res.status(result).send("Forbidden - bidding has begun on the auction.")
+            } else if (result === 404) {
+                return res.status(result).send('Not found.');
+            } else res.sendStatus(result);
+
+        });
+    } catch (err) {
+        res.sendStatus(400);
     }
-    str = str.substring(0, str.length-1);
-
-    User.updateAuction(id, str, function(result) {
-
-        if (result === 201) {
-            return res.status(result).send('OK');
-        } else if (result === 403){
-            return res.status(result).send("Forbidden - bidding has begun on the auction.")
-        } else if (result === 404) {
-            return res.status(result).send('Not found.');
-        } else res.sendStatus(result);
-
-    });
 };
 //done
 //offset in sql for startindex
@@ -242,20 +249,28 @@ exports.get_bids = function(req, res) {
         } else res.json(result);
     });
 };
-//TODO bid checking for validity
+
 exports.place_bid = function(req, res) {
-    let bid_data = {
-        "amount":req.body.amount,
-        "id":req.body.id
-    };
-    let amount = bid_data['amount'].toString();
-    let id = bid_data['id'].toString();
-    let token = req.get('X-Authorization');
-    User.placeBid(amount, id, token, function(result){
-        if (result === 201) {
-            res.status(result).send("OK");
-        } else res.sendStatus(result);
-    });
+
+    try {
+        let bid_data = {
+            "amount":req.body.amount,
+            "id":req.params.id
+        };
+        let amount = bid_data['amount'].toString();
+        let id = bid_data['id'].toString();
+        let token = req.get('X-Authorization');
+
+        User.placeBid(amount, id, token, function(result){
+            if (result === 201) {
+                res.status(result).send("OK");
+            } else res.sendStatus(result);
+        });
+    } catch (err) {
+        res.sendStatus(400);
+    }
+
+
 };
 //SEnd image as binary object through postman
 //only one image per auction

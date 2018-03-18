@@ -1,5 +1,4 @@
-//TODO all error codes
-//todo login function has error codes work
+//TODO malformed json
 
 const db = require('../../config/db');
 const path = require('path');
@@ -46,8 +45,6 @@ exports.getUser = function(id, token, done) {
         } else {
 
             let userId = rowss[0].user_id;
-
-
 
             if(userId.toString() === id) {
 
@@ -221,7 +218,7 @@ exports.repopulate_db = function(done) {
         }
     });
 };
-//TODO error responses Unauthorized  400(is it if theyre not logged in?)
+
 exports.createAuction = function(values, done) {
 
     db.get_pool().query("INSERT INTO auction " +
@@ -234,8 +231,7 @@ exports.createAuction = function(values, done) {
             });
         });
 };
-//TODO error response 401
-//401 works, unsure if its their own auction
+
 exports.updateAuction = function(id, values, done) {
     //Check if auction exists and if bidding has started
     db.get_pool().query("SELECT auction.*, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", id, function(err, result){
@@ -250,6 +246,9 @@ exports.updateAuction = function(id, values, done) {
             let query = "UPDATE auction SET " + values + "WHERE auction_id = ?";
             db.get_pool().query(query, id, function(err, rows){
                 if (err) return done(500);
+                if (rows.affectedRows === 0) {
+                    return done(404);
+                }
                 done(201);
             });
         }
@@ -299,46 +298,34 @@ exports.getOneAuction = function(id, done) {
         let currentBid = rows[0].currentBid;
 
         //TODO retrieve entire bid history to display
-        /*
-        var bids;
+
+
         exports.getBids(id, function(bids){
-            console.log(bids);
-            return (bids);
-        });
 
-        console.log(bids);
-        */
-        let amount = rows[0].amount;
-        let dateTime = rows[0].datetime;
-        let buyerId = rows[0].buyerId;
-        let buyerUsername = rows[0].buyerUsername;
+            let amount = rows[0].amount;
+            let dateTime = rows[0].datetime;
+            let buyerId = rows[0].buyerId;
+            let buyerUsername = rows[0].buyerUsername;
 
-        return done({
-            "categoryId":categoryId,
-            "categoryTitle":categoryTitle,
-            "title":title,
-            "reservePrice":reservePrice,
-            "startDateTime":startDateTime,
-            "endDateTime":endDateTime,
-            "description":description,
-            "creationDateTime":creationDateTime,
-            "photoUris":[
-                photoUris
-            ],
-            "seller":{
-                "id":id,
-                "username":username
-            },
-            "currentBid":currentBid,
-            "bids":
-                [
-                    {
-                        "amount":amount,
-                        "dateTime":dateTime,
-                        "buyerId":buyerId,
-                        "buyerUsername":buyerUsername
-                    }
-                ]
+            return done({
+                "categoryId":categoryId,
+                "categoryTitle":categoryTitle,
+                "title":title,
+                "reservePrice":reservePrice,
+                "startDateTime":startDateTime,
+                "endDateTime":endDateTime,
+                "description":description,
+                "creationDateTime":creationDateTime,
+                "seller":{
+                    "id":id,
+                    "username":username
+                },
+                "currentBid":currentBid,
+                "bids":
+                    [
+                        bids
+                    ]
+            });
         });
     });
 };
@@ -348,7 +335,7 @@ exports.getBids = function(id, done) {
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
         if (err) return done(500);
-        console.log(rows);
+
         if (rows.length > 0) {
             done(rows);
         } else {
@@ -357,23 +344,40 @@ exports.getBids = function(id, done) {
     });
 };
 
-//TODO implement 400 bad request and checking for if bid is valid
+
 exports.placeBid = function(amount, id, token, done) {
-    let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?))";
-    db.get_pool().query(query, [amount, id, token], function(err, rows) {
-        if (err) return done(500);
-        if(rows.affectedRows === 0) {
+    /* Get current bid */
+    let bidQuery = "SELECT MAX(bid.bid_amount) as max_bid FROM bid WHERE bid_auctionid = ?";
+    db.get_pool().query(bidQuery, id, function(err, bidRow) {
+        if(err) return done(500);
+        let maxBid = bidRow[0].max_bid;
+        if (amount <= maxBid) {
+            return done(400);
+        } else if (maxBid === null) {
             return done(404);
-        } else done(201);
+        } else {
+
+            let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?))";
+            db.get_pool().query(query, [amount, id, token], function(err, rows) {
+                if (err) return done(500);
+                if(rows.affectedRows === 0) {
+                    return done(404);
+                } else done(201);
+            });
+
+
+
+        }
     });
+
+
+
+
+
 
 };
 
-//SEnd image as binary object through postman
-//only one image per auction
-//create /uploads or /photos repo in directory with id of auction i.e 1.png
-//fields will still be in auction db, dont have to use them
-//GET will work by going to /uploads/1.png for auction 1
+
 exports.getPhoto = function(auctionId, done) {
 
     let query = "SELECT * FROM auction WHERE auction_id = ?";
