@@ -9,6 +9,7 @@ const auth = require('../../config/auth.js');
 
 const reset_database = path.join(__dirname, '../../database/create_database.sql');
 const sql_data = path.join(__dirname, '../../database/sql_data.sql');
+const picturePath = path.join(__dirname, '../../uploads');
 
 exports.createUser = function(values, done) {
     db.get_pool().query('INSERT INTO auction_user ' +
@@ -367,6 +368,21 @@ exports.placeBid = function(amount, id, token, done) {
     });
 
 };
+
+
+
+
+
+
+
+
+
+
+//SEnd image as binary object through postman
+//only one image per auction
+//create /uploads or /photos repo in directory with id of auction i.e 1.png
+//fields will still be in auction db, dont have to use them
+//GET will work by going to /uploads/1.png for auction 1
 //Todo doesnt work on auction not existing - implement
 exports.getPhoto = function(id, done) {
     let query = "SELECT auction_primaryphoto_URI FROM auction WHERE auction_id = ?";
@@ -381,8 +397,31 @@ exports.getPhoto = function(id, done) {
     });
 };
 
-exports.addPhoto = function(done) {
-    let query = "INSERT INTO photos";
+
+
+exports.addPhoto = function(auctionId, req, done) {
+    let query = "SELECT * FROM auction WHERE auction_id = ?";
+    db.get_pool().query(query, auctionId, function(err, rows) {
+        if (err) {
+            return done(500);
+        } else if (rows.length === 0) {
+            return done(404);
+        }
+
+    });
+
+
+    let filename = '/' + auctionId + '.png';
+    fs.stat(picturePath + filename, function(err, stat){
+        if (err === null) {
+            //File exists
+            return done(400);
+        } else if (err.code === 'ENOENT') {
+            //File doesnt already exist
+            req.pipe(fs.createWriteStream(picturePath + filename));
+            return done(201);
+        } else return done(500);
+    });
 };
 
 exports.deletePhoto = function(done) {

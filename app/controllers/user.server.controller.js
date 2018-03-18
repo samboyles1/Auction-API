@@ -1,4 +1,7 @@
 const User = require('../models/user.server.model');
+const fs = require('fs');
+const path = require('path');
+
 //const auth = require('../../config/auth.js');
 //USERS methods
 
@@ -254,23 +257,41 @@ exports.place_bid = function(req, res) {
 };
 
 
+
+
+
+
+
+
+
 //SEnd image as binary object through postman
 //only one image per auction
 //create /uploads or /photos repo in directory with id of auction i.e 1.png
 //fields will still be in auction db, dont have to use them
 //GET will work by going to /uploads/1.png for auction 1
 exports.get_photos = function(req, res) {
-    let id = req.params.id;
-    console.log(id);
-    User.getPhoto(id, function(result){
+    let auctionId = req.params.id;
+    User.getPhoto(auctionId, function(result){
         res.sendStatus(result);
     });
 };
 
+
+
+
+
+
+
+
+//TODO need to check its their auction
 exports.add_photo = function(req, res) {
-    let id = req.params.id;
-    User.addPhoto(id, function(result){
-        res.sendStatus(result);
+    let auctionId = req.params.id;
+    User.addPhoto(auctionId, req, function(result){
+        if (result === 201) {
+            res.status(result).send("OK").end();
+        } else {
+            res.sendStatus(result);
+        }
     });
 };
 
