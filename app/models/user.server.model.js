@@ -256,15 +256,47 @@ exports.updateAuction = function(id, values, done) {
 
 };
 //TODO updated api for get auctions, rewrite
-exports.getAuctions = function(done) {
+
+
+
+
+
+
+
+
+exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
+    let firstParam = false;
+    let query = "SELECT auction.auction_categoryid AS id, category.category_title AS categoryTitle, category.category_id AS categoryId, " +
+        "auction.auction_title AS title, auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, " +
+        "auction.auction_endingdate AS endDateTime, MAX(bid.bid_amount) AS currentBid FROM auction " +
+        "LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id" +
+        "LEFT OUTER JOIN category ON auction.auction_categoryid = category.category_id" +
+        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid";
+
+    if (startIndex !== undefined) {
+        if(!firstParam) {
+            query += "WHERE "
+        }
+    }
+
+
+
+
     db.get_pool().query('SELECT * FROM auction ORDER BY auction_startingdate DESC', function(err, rows){
             if(err) return done(err);
             done(rows);
         });
 };
 
+
+
+
+
+
+
+
 //TODO 401 unauthorized
-exports.getOneAuction = function(id, done) {
+exports.getOneAuction = function(id ,done) {
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
     "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +

@@ -151,43 +151,46 @@ exports.resample = function(req, res) {
 exports.create_auction = function(req, res) {
 
     try {
-        let auction_data = {
-            "categoryId":req.body.categoryId,
-            "title":req.body.title,
-            "description": req.body.description,
-            "startDateTime": req.body.startDateTime,
-            "endDateTime": req.body.endDateTime,
-            "reservePrice": req.body.reservePrice,
-            "startingBid": req.body.startingBid,
-            "user_id": req.body.user_id
-        };
-        let category = auction_data['categoryId'].toString();
-        let title = auction_data['title'].toString();
-        let description = auction_data['description'].toString();
-        let startTime = auction_data['startDateTime'].toString();
-        let endTime= auction_data['endDateTime'].toString();
-        let reserve = auction_data['reservePrice'].toString();
-        let startBid = auction_data['startingBid'].toString();
-        let userId = auction_data['user_id'].toString();
+        User.getIdFromToken(req.get('X-Authorization'), function(id) {
+            let auction_data = {
+                "categoryId":req.body.categoryId,
+                "title":req.body.title,
+                "description": req.body.description,
+                "startDateTime": req.body.startDateTime,
+                "endDateTime": req.body.endDateTime,
+                "reservePrice": req.body.reservePrice,
+                "startingBid": req.body.startingBid,
+                "user_id": id
+            };
+            let category = auction_data['categoryId'].toString();
+            let title = auction_data['title'].toString();
+            let description = auction_data['description'].toString();
+            let startTime = auction_data['startDateTime'].toString();
+            let endTime= auction_data['endDateTime'].toString();
+            let reserve = auction_data['reservePrice'].toString();
+            let startBid = auction_data['startingBid'].toString();
+            let userId = auction_data['user_id'].toString();
+            console.log(userId);
+            let values = [
+                [category],
+                [title],
+                [description],
+                [startTime],
+                [endTime],
+                [reserve],
+                [startBid],
+                [userId]
+            ];
 
-        let values = [
-            [category],
-            [title],
-            [description],
-            [startTime],
-            [endTime],
-            [reserve],
-            [startBid],
-            [userId]
-        ];
+            User.createAuction(values, function(result) {
+                if (result['id']) {
+                    res.json(result);
+                } else {
+                    res.sendStatus(result);
+                }
+            });
 
-        User.createAuction(values, function(result) {
-            if (result['id']) {
-                res.json(result);
-            } else {
-                res.sendStatus(result);
-            }
-        });
+        })
     } catch (err) {
         res.sendStatus(400);
     }
@@ -223,7 +226,15 @@ exports.update_auction = function(req, res) {
 //use startdate
 //use %like%
 exports.view_auctions = function(req, res) {
-    User.getAuctions(function(result) {
+    let startIndex = req.query.startIndex;
+    let count = req.query.count;
+    let q = req.query.q;
+    let category_id = req.query["category-id"];
+    let seller = req.query.seller;
+    let bidder = req.query.bidder;
+    let winner = req.query.winner;
+
+    User.getAuctions(startIndex, count, q, category_id, seller, bidder, winner, function(result) {
 
         if (result === 400 || result === 401 || result === 404 || result === 500) {
             res.sendStatus(result);
@@ -231,8 +242,13 @@ exports.view_auctions = function(req, res) {
     });
 };
 
-exports.get_auction = function(req, res) {
+exports.get_one_auction = function(req, res) {
     let id = req.params.id;
+
+
+
+
+
     User.getOneAuction(id, function(result){
         if (result === 400 || result === 401 || result === 404 || result === 500){
             res.sendStatus(result);
