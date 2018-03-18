@@ -144,48 +144,50 @@ exports.resample = function(req, res) {
         }
     });
 };
-//TODO godda fix this
 
 exports.create_auction = function(req, res) {
-    let auction_data = {
-        "categoryId":req.body.categoryId,
-        "title":req.body.title,
-        "description": req.body.description,
-        "startDateTime": req.body.startDateTime,
-        "endDateTime": req.body.endDateTime,
-        "reservePrice": req.body.reservePrice,
-        "startingBid": req.body.startingBid,
-        "user_id": req.body.user_id
-    }
 
-    let category = auction_data['categoryId'].toString();
-    let title = auction_data['title'].toString();
-    let description = auction_data['description'].toString();
-    let startTime = auction_data['startDateTime'].toString();
-    let endTime= auction_data['endDateTime'].toString();
-    let reserve = auction_data['reservePrice'].toString();
-    let startBid = auction_data['startingBid'].toString();
-    let userId = auction_data['user_id'].toString();
-
-    let values = [
-        [category],
-        [title],
-        [description],
-        [startTime],
-        [endTime],
-        [reserve],
-        [startBid],
-        [userId]
-    ];
-
-    User.createAuction(values, function(result) {
-        if (result['id']) {
-            res.json(result);
-        } else {
-            res.sendStatus(result);
-
+    try {
+        let auction_data = {
+            "categoryId":req.body.categoryId,
+            "title":req.body.title,
+            "description": req.body.description,
+            "startDateTime": req.body.startDateTime,
+            "endDateTime": req.body.endDateTime,
+            "reservePrice": req.body.reservePrice,
+            "startingBid": req.body.startingBid,
+            "user_id": req.body.user_id
         }
-    });
+        let category = auction_data['categoryId'].toString();
+        let title = auction_data['title'].toString();
+        let description = auction_data['description'].toString();
+        let startTime = auction_data['startDateTime'].toString();
+        let endTime= auction_data['endDateTime'].toString();
+        let reserve = auction_data['reservePrice'].toString();
+        let startBid = auction_data['startingBid'].toString();
+        let userId = auction_data['user_id'].toString();
+
+        let values = [
+            [category],
+            [title],
+            [description],
+            [startTime],
+            [endTime],
+            [reserve],
+            [startBid],
+            [userId]
+        ];
+
+        User.createAuction(values, function(result) {
+            if (result['id']) {
+                res.json(result);
+            } else {
+                res.sendStatus(result);
+            }
+        });
+    } catch (err) {
+        res.sendStatus(400);
+    }
 };
 
 exports.update_auction = function(req, res) {
@@ -255,15 +257,6 @@ exports.place_bid = function(req, res) {
         } else res.sendStatus(result);
     });
 };
-
-
-
-
-
-
-
-
-
 //SEnd image as binary object through postman
 //only one image per auction
 //create /uploads or /photos repo in directory with id of auction i.e 1.png
@@ -272,21 +265,19 @@ exports.place_bid = function(req, res) {
 exports.get_photos = function(req, res) {
     let auctionId = req.params.id;
     User.getPhoto(auctionId, function(result){
-        res.sendStatus(result);
+        if (result === 200 || result === 400 || result === 404 || result === 500){
+            res.sendStatus(result);
+        } else {
+            res.send(result);
+        }
     });
 };
 
-
-
-
-
-
-
-
-//TODO need to check its their auction
 exports.add_photo = function(req, res) {
     let auctionId = req.params.id;
-    User.addPhoto(auctionId, req, function(result){
+    let token = req.get('X-Authorization');
+
+    User.addPhoto(auctionId, token, req, function(result){
         if (result === 201) {
             res.status(result).send("OK").end();
         } else {
@@ -296,5 +287,8 @@ exports.add_photo = function(req, res) {
 };
 
 exports.delete_photo = function(req, res) {
-
+    let id = req.params.id;
+    User.deletePhoto(id, function(result){
+        res.sendStatus(result);
+    });
 };

@@ -221,7 +221,7 @@ exports.repopulate_db = function(done) {
         }
     });
 };
-//TODO error responses Unauthorized  403(is it if theyre not logged in?)
+//TODO error responses Unauthorized  400(is it if theyre not logged in?)
 exports.createAuction = function(values, done) {
 
     db.get_pool().query("INSERT INTO auction " +
@@ -369,63 +369,89 @@ exports.placeBid = function(amount, id, token, done) {
 
 };
 
-
-
-
-
-
-
-
-
-
 //SEnd image as binary object through postman
 //only one image per auction
 //create /uploads or /photos repo in directory with id of auction i.e 1.png
 //fields will still be in auction db, dont have to use them
 //GET will work by going to /uploads/1.png for auction 1
-//Todo doesnt work on auction not existing - implement
-exports.getPhoto = function(id, done) {
-    let query = "SELECT auction_primaryphoto_URI FROM auction WHERE auction_id = ?";
-    db.get_pool().query(query, id, function(err, rows) {
-        if(err) {
-            return done(500);
-        } else if (rows === []) { ///todo here
-            return done(400);
-        } else if(rows[0].auction_primaryphoto_URI === null) {
-            return done(404);
-        } else return done(rows);
-    });
-};
+exports.getPhoto = function(auctionId, done) {
 
-
-
-exports.addPhoto = function(auctionId, req, done) {
     let query = "SELECT * FROM auction WHERE auction_id = ?";
     db.get_pool().query(query, auctionId, function(err, rows) {
         if (err) {
+            /*Error in DB */
             return done(500);
         } else if (rows.length === 0) {
+            /* Can't find the auction */
             return done(404);
-        }
+        } else {
+            let pictureExt = '/' + auctionId + '.png';
+            fs.readFile(picturePath + pictureExt, {encoding: 'binary'}, function (err, data) {
+                if (err) return done(404);
+                if (data.length === 0) {
+                    done(404);
+                } else return done(data);
 
+            });
+        }
     });
 
+}
 
-    let filename = '/' + auctionId + '.png';
-    fs.stat(picturePath + filename, function(err, stat){
-        if (err === null) {
-            //File exists
+exports.addPhoto = function(auctionId, token, req, done) {
+
+    let loginQuery = "SELECT user_id FROM auction_user WHERE user_token = ?";
+    db.get_pool().query(loginQuery, token, function(err, rowss) {
+        if (err || rowss.length === 0) {
+            /* Not valid token */
             return done(400);
-        } else if (err.code === 'ENOENT') {
-            //File doesnt already exist
-            req.pipe(fs.createWriteStream(picturePath + filename));
+
+        } else {
+            let uid_from_token = rowss[0].user_id;
+
+            let query = "SELECT * FROM auction WHERE auction_id = ?";
+            db.get_pool().query(query, auctionId, function(err, rows) {
+                if (err) {
+                    /*Error in DB */
+                    return done(500);
+                } else if (rows.length === 0) {
+                    /* Can't find the auction */
+                    return done(404);
+                } else if (uid_from_token !== rows[0].auction_userid) {
+                    /* Not their auction */
+                    return done(400);
+                } else {
+                    /* Their auction */
+                    let filename = '/' + auctionId + '.png';
+                    fs.stat(picturePath + filename, function(err, stat){
+                        if (err === null) {
+                            /* Photo already exists */
+                            console.log('photo exists');
+                            return done(400);
+                        } else if (err.code === 'ENOENT') {
+                            /* Photo doesn't already exist */
+                            req.pipe(fs.createWriteStream(picturePath + filename));
+                            return done(201);
+                        } else return done(500);
+                    });
+                }
+            });
+
+        }
+    })
+};
+/* Throws a 401 Unauthorized error if not authenticated, however spec doesn't ask for a 401.  */
+exports.deletePhoto = function(auctionId, done) {
+    let path = picturePath + '/' + auctionId + '.png';
+    fs.stat(path, function (err, stat) {
+        if (err === null) {
+            /* Photo already exists */
+            fs.unlinkSync(path);
             return done(201);
+        } else if (err.code === 'ENOENT') {
+            return done(404);
         } else return done(500);
     });
-};
-
-exports.deletePhoto = function(done) {
-
 };
 //todo not throwing properly
 exports.getIdFromToken = function(token, done) {
@@ -439,4 +465,4 @@ exports.getIdFromToken = function(token, done) {
         } else return done(err)
 
     });
-}
+};

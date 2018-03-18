@@ -29,7 +29,7 @@ module.exports = function(app){
 
     app.route('/api/v1/auctions/:id/photos')
         .get(users.get_photos)
-        .post(users.add_photo)
-        .delete(users.delete_photo);
+        .post(auth.isAuthenticated, users.add_photo)
+        .delete(auth.isAuthenticated, users.delete_photo);
 
 };
