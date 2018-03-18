@@ -219,7 +219,6 @@ exports.update_auction = function(req, res) {
         res.sendStatus(400);
     }
 };
-//done
 //offset in sql for startindex
 //use startdate
 //use %like%
@@ -304,6 +303,10 @@ exports.add_photo = function(req, res) {
 exports.delete_photo = function(req, res) {
     let id = req.params.id;
     User.deletePhoto(id, function(result){
-        res.sendStatus(result);
-    });
+        if (result === 201) {
+            res.status(result).send("OK");
+        } else {
+            res.sendStatus(result);
+        }
+        });
 };

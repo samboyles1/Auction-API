@@ -1,5 +1,3 @@
-//TODO malformed json
-
 const db = require('../../config/db');
 const path = require('path');
 const fs = require('fs');
@@ -264,9 +262,8 @@ exports.getAuctions = function(done) {
             done(rows);
         });
 };
-//TODO list all bid history
+
 //TODO 401 unauthorized
-//todo pass x-auth
 exports.getOneAuction = function(id, done) {
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
@@ -296,9 +293,6 @@ exports.getOneAuction = function(id, done) {
         let id = rows[0].id;
         let username = rows[0].username;
         let currentBid = rows[0].currentBid;
-
-        //TODO retrieve entire bid history to display
-
 
         exports.getBids(id, function(bids){
 
@@ -457,7 +451,7 @@ exports.deletePhoto = function(auctionId, done) {
         } else return done(500);
     });
 };
-//todo not throwing properly
+
 exports.getIdFromToken = function(token, done) {
     let query = 'SELECT user_id FROM auction_user WHERE user_token = ?';
     db.get_pool().query(query, token, function(err, rows){
