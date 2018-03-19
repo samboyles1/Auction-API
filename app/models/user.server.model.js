@@ -265,24 +265,48 @@ exports.updateAuction = function(id, values, done) {
 
 //TODO add current bid
 exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
+    let firstParam = false;
     let query = "SELECT DISTINCT auction.auction_id AS id, category.category_title AS categoryTitle, category.category_id AS categoryId, " +
         "auction.auction_title AS title, auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, " +
-        "auction.auction_endingdate AS endDateTime " +
-        "FROM auction, auction_user, category, bid " +
-        "WHERE auction.auction_userid = auction_user.user_id AND auction.auction_categoryid = category.category_id ";// +
-        //"AND bid.bid_userid = auction_user.user_id";
+        "auction.auction_endingdate AS endDateTime, MAX(bid.bid_amount) as currentBid " +
+        "FROM auction " +
+        "LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
+        "LEFT OUTER JOIN category ON auction.auction_categoryid = category.category_id " +
+        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid ";
+
 
     if (q !== undefined) {
-        query += " AND auction.auction_title LIKE '%" + q +"%' ";
+        if (!firstParam) {
+            query += " WHERE auction.auction_title LIKE '%" + q + "%' ";
+            firstParam = true;
+        } else {
+            query += " AND auction.auction_title LIKE '%" + q + "%' ";
+        }
     }
     if (category_id !== undefined) {
-        query += " AND category.category_id = " + category_id;
+        if (!firstParam) {
+            query += " WHERE category.category_id = " + category_id;
+            firstParam = true;
+        } else {
+            query += " AND category.category_id = " + category_id;
+        }
     }
     if (seller !== undefined) {
-        query += " AND auction.auction_userid = " + seller;
+        if (!firstParam) {
+            query += " WHERE auction.auction_userid = " + seller;
+            firstParam = true;
+        } else {
+            query += " AND auction.auction_userid = " + seller;
+        }
     }
+    //not yet
     if (bidder !== undefined) {
-        query += " AND auction.auction_id IN (SELECT bid_auctionid FROM bid WHERE bid_userid = " + bidder + ") ";
+        if (!firstParam) {
+            query += " AND auction.auction_id IN (SELECT bid_auctionid FROM bid WHERE bid_userid = " + bidder + ") ";
+            firstParam = true;
+        } else {
+            query += " AND auction.auction_id IN (SELECT bid_auctionid FROM bid WHERE bid_userid = " + bidder + ") ";
+        }
     }
     //not correct yet - getting closed but not won by the winner
     if (winner !== undefined) {
@@ -323,8 +347,8 @@ exports.getOneAuction = function(id ,done) {
         " bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, auction_user.user_username AS buyerUsername " +
         "FROM auction LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
         "LEFT OUTER JOIN category ON auction.auction_categoryid = category.category_id " +
-        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid " +
-        "WHERE auction.auction_id = ?";
+        "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid ";// +
+        //"WHERE auction.auction_id = ?";
     db.get_pool().query(query, id, function(err, rows) {
         if (err) return done(500);
         if (rows[0].categoryId === null) {
@@ -345,6 +369,11 @@ exports.getOneAuction = function(id ,done) {
         let currentBid = rows[0].currentBid;
 
         exports.getBids(id, function(bids){
+            console.log(bids);
+            let bidHist = bids;
+            if(bidHist === 404) {
+                bidHist = null;
+            }
 
             let amount = rows[0].amount;
             let dateTime = rows[0].datetime;
@@ -367,7 +396,7 @@ exports.getOneAuction = function(id ,done) {
                 "currentBid":currentBid,
                 "bids":
                     [
-                        bids
+                        bidHist
                     ]
             });
         });
@@ -379,7 +408,7 @@ exports.getBids = function(id, done) {
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
         if (err) return done(500);
-
+        console.log(rows);
         if (rows.length > 0) {
             done(rows);
         } else {
