@@ -309,19 +309,22 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
         }
     }
 
-    query += " ORDER BY auction.auction_id ASC ";
+    query += " GROUP BY auction.auction_id ORDER BY auction.auction_id ASC ";
 
     if (startIndex !== undefined && count !== undefined) {
         query += "LIMIT " + count + " OFFSET " + startIndex;
     } else if (startIndex !== undefined) {
+
+        //TODO this limit not working properly/doesnt seem right
+
         query += "LIMIT " + startIndex + " OFFSET " + startIndex;
     } else if (count !== undefined) {
         query += "LIMIT " + count;
     }
 
-    console.log(query);
     db.get_pool().query(query, function(err, rows){
             if(err) {
+
                 return done(500);
             }
 
