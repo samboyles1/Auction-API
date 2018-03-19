@@ -102,12 +102,7 @@ exports.updateUser = function(id, values, done) {
 
     });
 };
-/*
-Logs the user into the website
-@param auth The email/username supplied by the user
-@param pass The password supplied by the user
-@param type Defines whether a username or email has been provided. 1 = Username, 2 = Email
-*/
+
 exports.userLogin = function(auth, pass, type, done) {
     /*
     if (type === 1) {
@@ -218,10 +213,9 @@ exports.repopulate_db = function(done) {
 };
 
 exports.createAuction = function(values, done) {
-
     db.get_pool().query("INSERT INTO auction " +
-        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid) " +
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?)", values, function(err, result) {
+        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid, auction_creationdate) " +
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE(NOW()))", values, function(err, result) {
             if(err) return done(500);
             let auction_id = result.insertId;
             done({
@@ -307,9 +301,7 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
         query += "LIMIT " + count + " OFFSET " + startIndex;
     } else if (startIndex !== undefined) {
 
-        //TODO this limit not working properly/doesnt seem right
-
-        query += "LIMIT " + startIndex + " OFFSET " + startIndex;
+        query += "LIMIT 2147483647 OFFSET " + startIndex;
     } else if (count !== undefined) {
         query += "LIMIT " + count;
     }
@@ -324,8 +316,10 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
         });
 };
 
-//TODO 400 bad req
 exports.getOneAuction = function(auctionId ,done) {
+    if (isNaN(auctionId)){
+        return done(400);
+    };
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
     "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
@@ -380,9 +374,7 @@ exports.getOneAuction = function(auctionId ,done) {
                 },
                 "currentBid":currentBid,
                 "bids":
-                    [
                         bids
-                    ]
             });
         });
     });
@@ -485,7 +477,6 @@ exports.addPhoto = function(auctionId, token, req, done) {
                     fs.stat(picturePath + filename, function(err, stat){
                         if (err === null) {
                             /* Photo already exists */
-                            console.log('photo exists');
                             return done(400);
                         } else if (err.code === 'ENOENT') {
                             /* Photo doesn't already exist */
@@ -499,7 +490,7 @@ exports.addPhoto = function(auctionId, token, req, done) {
         }
     })
 };
-/* Throws a 401 Unauthorized error if not authenticated, however spec doesn't ask for a 401.  */
+
 exports.deletePhoto = function(auctionId, done) {
     let path = picturePath + '/' + auctionId + '.png';
     fs.stat(path, function (err, stat) {

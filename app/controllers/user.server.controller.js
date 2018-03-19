@@ -170,7 +170,7 @@ exports.create_auction = function(req, res) {
             let reserve = auction_data['reservePrice'].toString();
             let startBid = auction_data['startingBid'].toString();
             let userId = auction_data['user_id'].toString();
-            console.log(userId);
+
             let values = [
                 [category],
                 [title],
