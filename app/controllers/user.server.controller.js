@@ -244,7 +244,7 @@ exports.view_auctions = function(req, res) {
 
 exports.get_one_auction = function(req, res) {
     let id = req.params.id;
-
+    console.log(id);
 
 
 

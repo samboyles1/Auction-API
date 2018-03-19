@@ -266,7 +266,7 @@ exports.updateAuction = function(id, values, done) {
 //TODO add current bid
 exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
     let firstParam = false;
-    let query = "SELECT DISTINCT auction.auction_id AS id, category.category_title AS categoryTitle, category.category_id AS categoryId, " +
+    let query = "SELECT auction.auction_id AS id, category.category_title AS categoryTitle, category.category_id AS categoryId, " +
         "auction.auction_title AS title, auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, " +
         "auction.auction_endingdate AS endDateTime, MAX(bid.bid_amount) as currentBid " +
         "FROM auction " +
@@ -325,7 +325,10 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
 
     console.log(query);
     db.get_pool().query(query, function(err, rows){
-            if(err) return done(500);
+            if(err) {
+                console.log(err);
+                return done(500);
+            }
             done(rows);
         });
 };
@@ -338,7 +341,7 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
 
 
 //TODO 401 unauthorized
-exports.getOneAuction = function(id ,done) {
+exports.getOneAuction = function(auctionId ,done) {
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
     "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
@@ -349,7 +352,7 @@ exports.getOneAuction = function(id ,done) {
         "LEFT OUTER JOIN category ON auction.auction_categoryid = category.category_id " +
         "LEFT OUTER JOIN bid ON auction.auction_id = bid.bid_auctionid ";// +
         //"WHERE auction.auction_id = ?";
-    db.get_pool().query(query, id, function(err, rows) {
+    db.get_pool().query(query, auctionId, function(err, rows) {
         if (err) return done(500);
         if (rows[0].categoryId === null) {
             return done(404);
@@ -368,11 +371,9 @@ exports.getOneAuction = function(id ,done) {
         let username = rows[0].username;
         let currentBid = rows[0].currentBid;
 
-        exports.getBids(id, function(bids){
-            console.log(bids);
-            let bidHist = bids;
-            if(bidHist === 404) {
-                bidHist = null;
+        exports.getBids(auctionId, function(bids){
+            if (bids === 404){
+                bids = null;
             }
 
             let amount = rows[0].amount;
@@ -396,7 +397,7 @@ exports.getOneAuction = function(id ,done) {
                 "currentBid":currentBid,
                 "bids":
                     [
-                        bidHist
+                        bids
                     ]
             });
         });
@@ -408,7 +409,6 @@ exports.getBids = function(id, done) {
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
         if (err) return done(500);
-        console.log(rows);
         if (rows.length > 0) {
             done(rows);
         } else {
