@@ -265,11 +265,12 @@ exports.updateAuction = function(id, values, done) {
 
 //TODO add current bid
 exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
-    let query = "SELECT auction.auction_id AS id, category.category_title AS categoryTitle, category.category_id AS categoryId, " +
+    let query = "SELECT DISTINCT auction.auction_id AS id, category.category_title AS categoryTitle, category.category_id AS categoryId, " +
         "auction.auction_title AS title, auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, " +
         "auction.auction_endingdate AS endDateTime " +
-        "FROM auction, auction_user, category " +
-        "WHERE auction.auction_userid = auction_user.user_id AND auction.auction_categoryid = category.category_id ";
+        "FROM auction, auction_user, category, bid " +
+        "WHERE auction.auction_userid = auction_user.user_id AND auction.auction_categoryid = category.category_id ";// +
+        //"AND bid.bid_userid = auction_user.user_id";
 
     if (q !== undefined) {
         query += " AND auction.auction_title LIKE '%" + q +"%' ";
@@ -283,8 +284,9 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
     if (bidder !== undefined) {
         query += " AND auction.auction_id IN (SELECT bid_auctionid FROM bid WHERE bid_userid = " + bidder + ") ";
     }
+    //not correct yet - getting closed but not won by the winner
     if (winner !== undefined) {
-        query += " AND DATE(auction.auction_endingdate) < DATE(NOW()) AND bid.bid_userid = " + winner;
+        query += " AND DATE(auction.auction_endingdate) < DATE(NOW()) AND auction.auction_userid = bid.bid_userid AND auction.auction_userid IN (SELECT DISTINCT bid.bid_userid FROM bid WHERE bid.bid_userid = " + winner + ") ";
     }
 
     query += " ORDER BY auction.auction_id ASC ";
@@ -297,6 +299,7 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
         query += "LIMIT " + count;
     }
 
+    console.log(query);
     db.get_pool().query(query, function(err, rows){
             if(err) return done(500);
             done(rows);
