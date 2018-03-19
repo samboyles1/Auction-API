@@ -342,7 +342,7 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
 
 //TODO 401 unauthorized
 exports.getOneAuction = function(auctionId ,done) {
-
+    hello
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
     "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
         "auction.auction_description AS description, auction.auction_creationdate AS creationDateTime, auction.auction_primaryphoto_URI AS photoUris," +
