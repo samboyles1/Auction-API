@@ -1,6 +1,4 @@
 const User = require('../models/user.server.model');
-const fs = require('fs');
-const path = require('path');
 
 exports.create_user = function(req, res) {
 
@@ -133,7 +131,7 @@ exports.login = function(req, res) {
     } else {
         res.statusMessage = "Invalid username/email/password supplied";
         res.status(400).send("Invalid username/email/password supplied");
-    };
+    }
 };
 
 exports.logout = function(req, res){
@@ -213,9 +211,11 @@ exports.create_auction = function(req, res) {
     }
 
 };
-//TODO allows people to update auctions that arent their own currently
+
 exports.update_auction = function(req, res) {
     try {
+        let token = req.get('X-Authorization');
+
         let auctionId = req.params.id;
         let params = req.body;
         let str = "";
@@ -225,7 +225,7 @@ exports.update_auction = function(req, res) {
         }
         str = str.substring(0, str.length - 1);
 
-        User.updateAuction(auctionId, str, function (result) {
+        User.updateAuction(auctionId, str, token, function (result) {
 
             if (result === 201) {
                 res.statusMessage = "OK";
@@ -270,9 +270,10 @@ exports.get_one_auction = function(req, res) {
         } else res.json(result);
     });
 };
-
+//TODO all timestamps return as integer
 exports.get_bids = function(req, res) {
     let id = req.params.id;
+
     User.getBids(id, function(result) {
         if (result === 400 || result === 404 || result === 500) {
             res.sendStatus(result);
@@ -282,23 +283,22 @@ exports.get_bids = function(req, res) {
 
 exports.place_bid = function(req, res) {
 
-    try {
-        let bid_data = {
-            "amount":req.body.amount,
-            "id":req.params.id
-        };
-        let amount = bid_data['amount'].toString();
-        let id = bid_data['id'].toString();
-        let token = req.get('X-Authorization');
 
-        User.placeBid(amount, id, token, function(result){
-            if (result === 201) {
-                res.status(result).send("OK");
-            } else res.sendStatus(result);
-        });
-    } catch (err) {
-        res.sendStatus(400);
-    }
+    let bid_data = {
+        "amount":req.body.amount,
+        "id":req.params.id
+    };
+    let amount = bid_data['amount'].toString();
+    let id = bid_data['id'].toString();
+    let token = req.get('X-Authorization');
+
+    User.placeBid(amount, id, token, function(result){
+        if (result === 201) {
+            res.statusMessage= "OK";
+            res.status(result).send("OK");
+        } else res.sendStatus(result);
+    });
+
 
 
 };
@@ -320,7 +320,8 @@ exports.add_photo = function(req, res) {
 
     User.addPhoto(auctionId, token, req, function(result){
         if (result === 201) {
-            res.status(result).send("OK").end();
+            res.statusMessage = "OK";
+            res.status(result).send("OK");
         } else {
             res.sendStatus(result);
         }
@@ -329,8 +330,11 @@ exports.add_photo = function(req, res) {
 
 exports.delete_photo = function(req, res) {
     let id = req.params.id;
-    User.deletePhoto(id, function(result){
+    let token = req.get('X-Authorization');
+
+    User.deletePhoto(id, token, function(result){
         if (result === 201) {
+            res.statusMessage = "OK";
             res.status(result).send("OK");
         } else {
             res.sendStatus(result);

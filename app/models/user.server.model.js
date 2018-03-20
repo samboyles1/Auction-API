@@ -104,36 +104,6 @@ exports.updateUser = function(id, values, done) {
 };
 
 exports.userLogin = function(auth, pass, type, done) {
-    /*
-    if (type === 1) {
-        let query = 'SELECT * FROM auction_user where user_username = ? and user_password = ?';
-    } else if (type === 2) {
-        let query = 'SELECT * FROM auction_user where user_email = ? and user_password = ?';
-    }
-
-    db.get_pool().query(query, [auth, pass], function (err, rows) {
-        if (err) {
-            return done({"ERROR": "Invalid username/email/password supplied"});
-        }
-        ;
-
-        if (rows.length > 0) {
-            let userid = rows[0].user_id;
-            let token = rows[0].user_token;
-
-            done({
-                "id": userid,
-                "token": token
-            });
-        } else {
-            return done({"ERROR": "Invalid username/email/password supplied"});
-        }
-        ;
-
-
-    });
-};
-*/ //Trying to make this more compact
 
     if (type === 1) {
         db.get_pool().query('SELECT * FROM auction_user WHERE user_username = ? and user_password = ?', [auth, pass], function(err, rows) {
@@ -224,30 +194,58 @@ exports.createAuction = function(values, done) {
         });
 };
 
-exports.updateAuction = function(id, values, done) {
-    //Check if auction exists and if bidding has started
-    db.get_pool().query("SELECT auction.*, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", id, function(err, result){
-        if(err) {
-            return done(500);
-        } else if(!result.length) {
-            return done(404);
-        } else if(result[0].num_bids > 0){
-            return done(403);
-        } else {
+exports.updateAuction = function(auctionId, values, token, done) {
+    if(isNaN(auctionId)){
+        return done(400);
+    } else {
 
-            let query = "UPDATE auction SET " + values + "WHERE auction_id = ?";
-            db.get_pool().query(query, id, function(err, rows){
-                if (err) return done(500);
-                if (rows.affectedRows === 0) {
-                    return done(404);
-                }
-                done(201);
-            });
-        }
-    });
+        let loginQuery = "SELECT user_id FROM auction_user WHERE user_token = ?";
+        db.get_pool().query(loginQuery, token, function(err, rowss) {
+            if (err || rowss.length === 0) {
+                /* Not valid token */
+                return done(401);
 
+            } else {
+                let uid_from_token = rowss[0].user_id;
 
+                let query = "SELECT * FROM auction WHERE auction_id = ?";
+                db.get_pool().query(query, auctionId, function(err, rows) {
+                    if (err) {
+                        /*Error in DB */
+                        return done(500);
+                    } else if (rows.length === 0) {
+                        /* Can't find the auction */
+                        return done(404);
+                    } else if (uid_from_token !== rows[0].auction_userid) {
+                        /* Not their auction */
+                        return done(401);
+                    } else {
 
+                        //Check if auction exists and if bidding has started
+                        db.get_pool().query("SELECT auction.*, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", auctionId, function (err, result) {
+                            if (err) {
+                                return done(500);
+                            } else if (!result.length) {
+                                return done(404);
+                            } else if (result[0].num_bids > 0) {
+                                return done(403);
+                            } else {
+
+                                let query = "UPDATE auction SET " + values + "WHERE auction_id = ?";
+                                db.get_pool().query(query, auctionId, function (err, rows) {
+                                    if (err) return done(500);
+                                    if (rows.affectedRows === 0) {
+                                        return done(404);
+                                    }
+                                    done(201);
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    }
 };
 
 exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
@@ -381,6 +379,9 @@ exports.getOneAuction = function(auctionId ,done) {
 };
 
 exports.getBids = function(id, done) {
+    if (isNaN(id)){
+        return done(400);
+    }
     db.get_pool().query("SELECT bid.bid_amount AS amount, bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, " +
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
@@ -395,6 +396,9 @@ exports.getBids = function(id, done) {
 
 exports.placeBid = function(amount, id, token, done) {
     /* Get current bid */
+    if(isNaN(id)) {
+        return done(400);
+    }
     let bidQuery = "SELECT MAX(bid.bid_amount) as max_bid FROM bid WHERE bid_auctionid = ?";
     db.get_pool().query(bidQuery, id, function(err, bidRow) {
         if(err) return done(500);
@@ -410,7 +414,9 @@ exports.placeBid = function(amount, id, token, done) {
                 if (err) return done(500);
                 if(rows.affectedRows === 0) {
                     return done(404);
-                } else done(201);
+                } else {
+                    done(201);
+                }
             });
 
 
@@ -434,7 +440,7 @@ exports.getPhoto = function(auctionId, done) {
             return done(500);
         } else if (rows.length === 0) {
             /* Can't find the auction */
-            return done(404);
+            return done(400);
         } else {
             let pictureExt = '/' + auctionId + '.png';
             fs.readFile(picturePath + pictureExt, {encoding: 'binary'}, function (err, data) {
@@ -455,7 +461,7 @@ exports.addPhoto = function(auctionId, token, req, done) {
     db.get_pool().query(loginQuery, token, function(err, rowss) {
         if (err || rowss.length === 0) {
             /* Not valid token */
-            return done(400);
+            return done(401);
 
         } else {
             let uid_from_token = rowss[0].user_id;
@@ -470,7 +476,7 @@ exports.addPhoto = function(auctionId, token, req, done) {
                     return done(404);
                 } else if (uid_from_token !== rows[0].auction_userid) {
                     /* Not their auction */
-                    return done(400);
+                    return done(401);
                 } else {
                     /* Their auction */
                     let filename = '/' + auctionId + '.png';
@@ -491,16 +497,42 @@ exports.addPhoto = function(auctionId, token, req, done) {
     })
 };
 
-exports.deletePhoto = function(auctionId, done) {
-    let path = picturePath + '/' + auctionId + '.png';
-    fs.stat(path, function (err, stat) {
-        if (err === null) {
-            /* Photo already exists */
-            fs.unlinkSync(path);
-            return done(201);
-        } else if (err.code === 'ENOENT') {
-            return done(404);
-        } else return done(500);
+exports.deletePhoto = function(auctionId, token, done) {
+
+    let loginQuery = "SELECT user_id FROM auction_user WHERE user_token = ?";
+    db.get_pool().query(loginQuery, token, function(err, rowss) {
+        if (err || rowss.length === 0) {
+            /* Not valid token */
+            return done(401);
+
+        } else {
+            let uid_from_token = rowss[0].user_id;
+            let query = "SELECT * FROM auction WHERE auction_id = ?";
+            db.get_pool().query(query, auctionId, function(err, rows) {
+                if (err) {
+                    /*Error in DB */
+                    return done(500);
+                } else if (rows.length === 0) {
+                    /* Can't find the auction */
+                    return done(404);
+                } else if (uid_from_token !== rows[0].auction_userid) {
+                    /* Not their auction */
+                    return done(401);
+                } else {
+
+                    let path = picturePath + '/' + auctionId + '.png';
+                    fs.stat(path, function (err, stat) {
+                        if (err === null) {
+                            /* Photo already exists */
+                            fs.unlinkSync(path);
+                            return done(201);
+                        } else if (err.code === 'ENOENT') {
+                            return done(404);
+                        } else return done(500);
+                    });
+                }
+            });
+        }
     });
 };
 
