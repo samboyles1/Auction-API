@@ -73,7 +73,7 @@ exports.updateAuction = function(auctionId, values, token, done) {
 exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
     let firstParam = false;
     let query = "SELECT auction.auction_id AS id, category.category_title AS categoryTitle, auction.auction_categoryid AS categoryId, auction.auction_title AS title, " +
-        "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
+        "auction.auction_reserveprice AS reservePrice, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_startingdate, '+00:00', 'SYSTEM')) AS startDateTime, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_endingdate, '+00:00', 'SYSTEM')) AS endDateTime, " +
         "MAX(bid.bid_amount) AS currentBid " +
         "FROM auction " +
         "LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
@@ -142,8 +142,8 @@ exports.getOneAuction = function(auctionId ,done) {
     };
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
-        "auction.auction_reserveprice AS reservePrice, auction.auction_startingdate AS startDateTime, auction.auction_endingdate AS endDateTime, " +
-        "auction.auction_description AS description, auction.auction_creationdate AS creationDateTime, auction.auction_primaryphoto_URI AS photoUris," +
+        "auction.auction_reserveprice AS reservePrice, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_startingdate, '+00:00', 'SYSTEM')) AS startDateTime, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_endingdate, '+00:00', 'SYSTEM')) AS endDateTime, " +
+        "auction.auction_description AS description, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_creationdate, '+00:00', 'SYSTEM')) AS creationDateTime," +
         " auction.auction_userid AS id, auction_user.user_username AS username, MAX(bid.bid_amount) AS currentBid, bid.bid_amount AS amount," +
         " bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, auction_user.user_username AS buyerUsername " +
         "FROM auction LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
@@ -204,7 +204,7 @@ exports.getBids = function(id, done) {
     if (isNaN(id)){
         return done(400);
     }
-    db.get_pool().query("SELECT bid.bid_amount AS amount, bid.bid_datetime AS datetime, bid.bid_userid AS buyerId, " +
+    db.get_pool().query("SELECT bid.bid_amount AS amount, UNIX_TIMESTAMP(CONVERT_TZ(bid.bid_datetime, '+00:00', 'SYSTEM')) AS datetime, bid.bid_userid AS buyerId, " +
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
         if (err) return done(500);
@@ -231,7 +231,7 @@ exports.placeBid = function(amount, id, token, done) {
             return done(404);
         } else {
 
-            let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?))";
+            let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid, bid_datetime) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?), DATE(NOW()))";
             db.get_pool().query(query, [amount, id, token], function(err, rows) {
                 if (err) return done(500);
                 if(rows.affectedRows === 0) {
