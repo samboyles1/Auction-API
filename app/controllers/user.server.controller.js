@@ -31,8 +31,9 @@ exports.create_user = function(req, res) {
         User.createUser(values, function (result) {
             if (result === 400) {
                 res.statusMessage = "Malformed request";
-                res.send(result, "Malformed request");
+                res.status(result).send("Malformed request");
             } else {
+                res.statusMessage = "OK";
                 res.status(201);
                 res.json({
                     "id": result['insertId']
@@ -42,7 +43,8 @@ exports.create_user = function(req, res) {
 
         });
     } catch (err) {
-        res.sendStatus(400);
+        res.statusMessage = "Malformed request";
+        res.status(400).send("Malformed request");
     }
 };
 
@@ -75,14 +77,17 @@ exports.update_user = function(req, res) {
 
         User.updateUser(id, str, function (result) {
             if (result === 201) {
+                res.statusMessage = "OK";
                 res.status(result).send("OK");
 
             } else {
+                res.statusMessage = "Unauthorized";
                 res.status(result).send("Unauthorized");
             }
         });
     } catch (err) {
-        res.sendStatus(401);
+        res.statusMessage = "Unauthorized";
+        res.status(401).send("Unauthorized");
     }
 };
 
@@ -92,6 +97,11 @@ exports.login = function(req, res) {
         "username": req.query.username,
         "email": req.query.email,
         "password": req.query.password
+    };
+
+    if(req.query.password === undefined) {
+        res.statusMessage = "Invalid username/email/password supplied";
+        res.status(400).send("Invalid username/email/password supplied");
     }
 
     if (user_data['username'] !== undefined) {
@@ -99,6 +109,7 @@ exports.login = function(req, res) {
         let password = user_data['password'].toString();
         User.userLogin(user, password, 1, function(result){
             if(result === 400) {
+                res.statusMessage = "Invalid username/email/password supplied";
                 res.status(result).send("Invalid username/email/password supplied")
             } else {
                 res.json(result);
@@ -112,6 +123,7 @@ exports.login = function(req, res) {
 
         User.userLogin(email, password, 2, function(result){
             if(result === 400) {
+                res.statusMessage = "Invalid username/email/password supplied";
                 res.status(result).send("Invalid username/email/password supplied")
             } else {
                 res.json(result);
@@ -119,8 +131,8 @@ exports.login = function(req, res) {
         });
 
     } else {
-        res.status(400);
-        res.send("Invalid username/email/password supplied");
+        res.statusMessage = "Invalid username/email/password supplied";
+        res.status(400).send("Invalid username/email/password supplied");
     };
 };
 
@@ -141,6 +153,7 @@ exports.reset = function(req, res) {
 exports.resample = function(req, res) {
     User.repopulate_db(function(result) {
         if (result === 201) {
+            res.statusMessage = "Sample of data has been reloaded.";
             res.status(result).send("Sample of data has been reloaded.")
         } else {
             res.sendStatus(result);
@@ -150,11 +163,14 @@ exports.resample = function(req, res) {
 
 exports.create_auction = function(req, res) {
 
-    try {
-        User.getIdFromToken(req.get('X-Authorization'), function(id) {
+    if(!(req.body.categoryId && req.body.title && req.body.description && req.body.startDateTime && req.body.endDateTime && req.body.reservePrice && req.body.startingBid)) {
+        res.statusMessage = "Bad request.";
+        res.sendStatus(400).end();
+    } else {
+        User.getIdFromToken(req.get('X-Authorization'), function (id) {
             let auction_data = {
-                "categoryId":req.body.categoryId,
-                "title":req.body.title,
+                "categoryId": req.body.categoryId,
+                "title": req.body.title,
                 "description": req.body.description,
                 "startDateTime": req.body.startDateTime,
                 "endDateTime": req.body.endDateTime,
@@ -166,7 +182,7 @@ exports.create_auction = function(req, res) {
             let title = auction_data['title'].toString();
             let description = auction_data['description'].toString();
             let startTime = auction_data['startDateTime'].toString();
-            let endTime= auction_data['endDateTime'].toString();
+            let endTime = auction_data['endDateTime'].toString();
             let reserve = auction_data['reservePrice'].toString();
             let startBid = auction_data['startingBid'].toString();
             let userId = auction_data['user_id'].toString();
@@ -182,8 +198,10 @@ exports.create_auction = function(req, res) {
                 [userId]
             ];
 
-            User.createAuction(values, function(result) {
+            User.createAuction(values, function (result) {
                 if (result['id']) {
+                    res.statusMessage = "OK";
+                    res.status(201);
                     res.json(result);
                 } else {
                     res.sendStatus(result);
@@ -191,14 +209,14 @@ exports.create_auction = function(req, res) {
             });
 
         })
-    } catch (err) {
-        res.sendStatus(400);
-    }
-};
 
+    }
+
+};
+//TODO allows people to update auctions that arent their own currently
 exports.update_auction = function(req, res) {
     try {
-        let id = req.params.id;
+        let auctionId = req.params.id;
         let params = req.body;
         let str = "";
         for (let i in params) {
@@ -207,14 +225,17 @@ exports.update_auction = function(req, res) {
         }
         str = str.substring(0, str.length - 1);
 
-        User.updateAuction(id, str, function (result) {
+        User.updateAuction(auctionId, str, function (result) {
 
             if (result === 201) {
-                return res.status(result).send('OK');
+                res.statusMessage = "OK";
+                res.status(result).send("OK");
             } else if (result === 403) {
-                return res.status(result).send("Forbidden - bidding has begun on the auction.")
+                res.statusMessage = "Forbidden - bidding has begun on the auction.";
+                res.status(result).send("Forbidden - bidding has begun on the auction.");
             } else if (result === 404) {
-                return res.status(result).send('Not found.');
+                res.statusMessage = "Not found.";
+                res.status(result).send("Not found.");
             } else res.sendStatus(result);
 
         });
@@ -222,9 +243,7 @@ exports.update_auction = function(req, res) {
         res.sendStatus(400);
     }
 };
-//offset in sql for startindex
-//use startdate
-//use %like%
+
 exports.view_auctions = function(req, res) {
     let startIndex = req.query.startIndex;
     let count = req.query.count;
@@ -283,11 +302,7 @@ exports.place_bid = function(req, res) {
 
 
 };
-//SEnd image as binary object through postman
-//only one image per auction
-//create /uploads or /photos repo in directory with id of auction i.e 1.png
-//fields will still be in auction db, dont have to use them
-//GET will work by going to /uploads/1.png for auction 1
+
 exports.get_photos = function(req, res) {
     let auctionId = req.params.id;
     User.getPhoto(auctionId, function(result){

@@ -295,7 +295,7 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
         }
     }
 
-    query += " GROUP BY auction.auction_id ORDER BY auction.auction_id ASC ";
+    query += " GROUP BY auction.auction_id ORDER BY auction.auction_startingdate DESC, auction.auction_id ";
 
     if (startIndex !== undefined && count !== undefined) {
         query += "LIMIT " + count + " OFFSET " + startIndex;
