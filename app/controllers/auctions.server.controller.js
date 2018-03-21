@@ -2,6 +2,9 @@ const Auction = require('../models/auctions.server.model');
 
 exports.create_auction = function(req, res) {
 
+
+
+
     if(!(req.body.categoryId && req.body.title && req.body.description && req.body.startDateTime && req.body.endDateTime && req.body.reservePrice && req.body.startingBid)) {
         res.statusMessage = "Bad request.";
         res.sendStatus(400).end();

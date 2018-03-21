@@ -6,7 +6,7 @@ const picturePath = path.join(__dirname, '../../uploads');
 
 exports.createAuction = function(values, done) {
     db.get_pool().query("INSERT INTO auction " +
-        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid, auction_creationdate) " +
+        "(auction_categoryid, auction_title, auction_description, auction_startingdate*1000, auction_endingdate*1000, auction_reserveprice, auction_startingprice, auction_userid, auction_creationdate*1000) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE(NOW()))", values, function(err, result) {
         if(err) return done(500);
         let auction_id = result.insertId;
@@ -73,7 +73,7 @@ exports.updateAuction = function(auctionId, values, token, done) {
 exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder, winner, done) {
     let firstParam = false;
     let query = "SELECT auction.auction_id AS id, category.category_title AS categoryTitle, auction.auction_categoryid AS categoryId, auction.auction_title AS title, " +
-        "auction.auction_reserveprice AS reservePrice, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_startingdate, '+00:00', 'SYSTEM')) AS startDateTime, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_endingdate, '+00:00', 'SYSTEM')) AS endDateTime, " +
+        "auction.auction_reserveprice AS reservePrice, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_startingdate, '+00:00', 'SYSTEM'))*1000 AS startDateTime, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_endingdate, '+00:00', 'SYSTEM'))*1000 AS endDateTime, " +
         "MAX(bid.bid_amount) AS currentBid " +
         "FROM auction " +
         "LEFT OUTER JOIN auction_user ON auction.auction_userid = auction_user.user_id " +
@@ -160,11 +160,10 @@ exports.getOneAuction = function(auctionId ,done) {
         let categoryTitle = rows[0].categoryTitle;
         let title = rows[0].title;
         let reservePrice = rows[0].reservePrice;
-        let startDateTime = rows[0].startDateTime;
-        let endDateTime = rows[0].endDateTime;
+        let startDateTime = (rows[0].startDateTime * 1000);
+        let endDateTime = (rows[0].endDateTime * 1000);
         let description = rows[0].description;
-        let creationDateTime = rows[0].creationDateTime;
-        let photoUris = rows[0].photoUris;
+        let creationDateTime = (rows[0].creationDateTime * 1000);
         let id = rows[0].id;
         let username = rows[0].username;
         let currentBid = rows[0].currentBid;
@@ -204,7 +203,7 @@ exports.getBids = function(id, done) {
     if (isNaN(id)){
         return done(400);
     }
-    db.get_pool().query("SELECT bid.bid_amount AS amount, UNIX_TIMESTAMP(CONVERT_TZ(bid.bid_datetime, '+00:00', 'SYSTEM')) AS datetime, bid.bid_userid AS buyerId, " +
+    db.get_pool().query("SELECT bid.bid_amount AS amount, UNIX_TIMESTAMP(CONVERT_TZ(bid.bid_datetime, '+00:00', 'SYSTEM'))*1000 AS datetime, bid.bid_userid AS buyerId, " +
         "auction_user.user_username AS buyerUsername FROM bid, auction_user " +
         "WHERE bid_auctionid = ? AND bid.bid_userid = auction_user.user_id", id, function(err, rows) {
         if (err) return done(500);
