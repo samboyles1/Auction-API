@@ -3,8 +3,6 @@ const Auction = require('../models/auctions.server.model');
 exports.create_auction = function(req, res) {
 
 
-
-
     if(!(req.body.categoryId && req.body.title && req.body.description && req.body.startDateTime && req.body.endDateTime && req.body.reservePrice && req.body.startingBid)) {
         res.statusMessage = "Bad request.";
         res.sendStatus(400).end();
@@ -75,7 +73,7 @@ exports.update_auction = function(req, res) {
                 res.statusMessage = "OK";
                 res.status(result).send("OK");
             } else if (result === 403) {
-                res.statusMessage = "Forbidden - bidding has begun on the auction.";
+                res.statusMessage = "Forbidden";
                 res.status(result).send("Forbidden - bidding has begun on the auction.");
             } else if (result === 404) {
                 res.statusMessage = "Not found.";
@@ -114,7 +112,7 @@ exports.get_one_auction = function(req, res) {
         } else res.json(result);
     });
 };
-//TODO all timestamps return as integer
+
 exports.get_bids = function(req, res) {
     let id = req.params.id;
 

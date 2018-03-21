@@ -6,9 +6,12 @@ const picturePath = path.join(__dirname, '../../uploads');
 
 exports.createAuction = function(values, done) {
     db.get_pool().query("INSERT INTO auction " +
-        "(auction_categoryid, auction_title, auction_description, auction_startingdate*1000, auction_endingdate*1000, auction_reserveprice, auction_startingprice, auction_userid, auction_creationdate*1000) " +
+        "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid, auction_creationdate) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE(NOW()))", values, function(err, result) {
-        if(err) return done(500);
+        if(err){
+            console.log(err);
+            return done(500);
+        }
         let auction_id = result.insertId;
         done({
             "id":auction_id
@@ -44,9 +47,11 @@ exports.updateAuction = function(auctionId, values, token, done) {
                     } else {
 
                         //Check if auction exists and if bidding has started
-                        db.get_pool().query("SELECT auction.*, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", auctionId, function (err, result) {
+                        db.get_pool().query("SELECT auction.*, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_startingdate, '+00:00', 'SYSTEM'))*1000 as time, COUNT(*) AS num_bids FROM auction, bid WHERE auction.auction_id = ? and auction.auction_id = bid.bid_auctionid", auctionId, function (err, result) {
                             if (err) {
                                 return done(500);
+                            }else if (result[0].time <= Date.now()) {
+                                return done(403)
                             } else if (!result.length) {
                                 return done(404);
                             } else if (result[0].num_bids > 0) {
@@ -139,7 +144,7 @@ exports.getAuctions = function(startIndex, count, q, category_id, seller, bidder
 exports.getOneAuction = function(auctionId ,done) {
     if (isNaN(auctionId)){
         return done(400);
-    };
+    }
 
     let query = "SELECT auction.auction_categoryid AS categoryId, category.category_title AS categoryTitle, auction.auction_title AS title, " +
         "auction.auction_reserveprice AS reservePrice, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_startingdate, '+00:00', 'SYSTEM')) AS startDateTime, UNIX_TIMESTAMP(CONVERT_TZ(auction.auction_endingdate, '+00:00', 'SYSTEM')) AS endDateTime, " +
@@ -173,10 +178,6 @@ exports.getOneAuction = function(auctionId ,done) {
                 bids = null;
             }
 
-            let amount = rows[0].amount;
-            let dateTime = rows[0].datetime;
-            let buyerId = rows[0].buyerId;
-            let buyerUsername = rows[0].buyerUsername;
 
             return done({
                 "categoryId":categoryId,
@@ -265,16 +266,18 @@ exports.getPhoto = function(auctionId, done) {
         } else {
             let pictureExt = '/' + auctionId + '.png';
             fs.readFile(picturePath + pictureExt, {encoding: 'binary'}, function (err, data) {
-                if (err) return done(404);
-                if (data.length === 0) {
-                    done(404);
+                if (err || data.length === 0) {
+                    let defaultExt = '/default.png';
+                    fs.readFile(picturePath + defaultExt, {encoding: 'binary'}, function (err, defaultImg) {
+                        return done(defaultImg);
+                    });
                 } else return done(data);
 
             });
         }
     });
 
-}
+};
 
 exports.addPhoto = function(auctionId, token, req, done) {
 
