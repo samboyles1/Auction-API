@@ -132,9 +132,10 @@ exports.place_bid = function(req, res) {
 
 
     let bid_data = {
-        "amount":req.body.amount,
+        "amount":req.query.amount,
         "id":req.params.id
     };
+
     let amount = bid_data['amount'].toString();
     let id = bid_data['id'].toString();
     let token = req.get('X-Authorization');
@@ -156,7 +157,7 @@ exports.get_photos = function(req, res) {
         if (result === 200 || result === 400 || result === 404 || result === 500){
             res.sendStatus(result);
         } else {
-            res.send(result);
+            res.sendFile(result);
         }
     });
 };

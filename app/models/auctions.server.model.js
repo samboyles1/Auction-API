@@ -9,7 +9,6 @@ exports.createAuction = function(values, done) {
         "(auction_categoryid, auction_title, auction_description, auction_startingdate, auction_endingdate, auction_reserveprice, auction_startingprice, auction_userid, auction_creationdate) " +
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?, DATE(NOW()))", values, function(err, result) {
         if(err){
-            console.log(err);
             return done(500);
         }
         let auction_id = result.insertId;
@@ -221,29 +220,37 @@ exports.placeBid = function(amount, id, token, done) {
     if(isNaN(id)) {
         return done(400);
     }
-    let bidQuery = "SELECT MAX(bid.bid_amount) as max_bid FROM bid WHERE bid_auctionid = ?";
-    db.get_pool().query(bidQuery, id, function(err, bidRow) {
+
+
+    let bidQuery = "SELECT CURRENT_TIMESTAMP() as now, MAX(bid.bid_amount) as max_bid, auction.auction_endingdate as end FROM bid, auction WHERE bid_auctionid = ? and auction.auction_id = ?";
+    db.get_pool().query(bidQuery, [id, id], function(err, bidRow) {
         if(err) return done(500);
         let maxBid = bidRow[0].max_bid;
+
+
+        let endT = new Date(bidRow[0].end)
+        let cur = new Date(bidRow[0].now)
+        console.log(bidRow[0].end, cur)
+        console.log(bidRow[0].now > bidRow[0].end)
+
         if (amount <= maxBid) {
             return done(400);
-        } else if (maxBid === null) {
+        } else if (bidRow[0].now > bidRow[0].end) {
+    return done(400)
+} else {
+
+    let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid, bid_datetime) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?), DATE(NOW()))";
+    db.get_pool().query(query, [amount, id, token], function (err, rows) {
+        if (err) return done(500);
+        if (rows.affectedRows === 0) {
             return done(404);
         } else {
-
-            let query = "INSERT INTO bid (bid_amount, bid_auctionid, bid_userid, bid_datetime) VALUES (?, ?, (SELECT user_id FROM auction_user WHERE user_token = ?), DATE(NOW()))";
-            db.get_pool().query(query, [amount, id, token], function(err, rows) {
-                if (err) return done(500);
-                if(rows.affectedRows === 0) {
-                    return done(404);
-                } else {
-                    done(201);
-                }
-            });
-
-
-
+            done(201);
         }
+    });
+
+
+}
     });
 
 
@@ -269,9 +276,9 @@ exports.getPhoto = function(auctionId, done) {
                 if (err || data.length === 0) {
                     let defaultExt = '/default.png';
                     fs.readFile(picturePath + defaultExt, {encoding: 'binary'}, function (err, defaultImg) {
-                        return done(defaultImg);
+                        return done(picturePath + defaultExt);
                     });
-                } else return done(data);
+                } else return done(picturePath + pictureExt);
 
             });
         }
