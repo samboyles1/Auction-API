@@ -27,26 +27,31 @@ exports.create_auction = function(req, res) {
             let startBid = auction_data['startingBid'].toString();
             let userId = auction_data['user_id'].toString();
 
-            let values = [
-                [category],
-                [title],
-                [description],
-                [startTime],
-                [endTime],
-                [reserve],
-                [startBid],
-                [userId]
-            ];
+            if (startTime > endTime) {
+                res.sendStatus(400).end()
+            } else {
 
-            Auction.createAuction(values, function (result) {
-                if (result['id']) {
-                    res.statusMessage = "OK";
-                    res.status(201);
-                    res.json(result);
-                } else {
-                    res.sendStatus(result);
-                }
-            });
+                let values = [
+                    [category],
+                    [title],
+                    [description],
+                    [startTime],
+                    [endTime],
+                    [reserve],
+                    [startBid],
+                    [userId]
+                ];
+
+                Auction.createAuction(values, function (result) {
+                    if (result['id']) {
+                        res.statusMessage = "OK";
+                        res.status(201);
+                        res.json(result);
+                    } else {
+                        res.sendStatus(result);
+                    }
+                });
+            }
 
         })
 

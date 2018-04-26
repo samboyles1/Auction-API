@@ -95,6 +95,7 @@ exports.updateUser = function(id, values, done) {
     db.get_pool().query(query, id, function(err, rows){
         if(err) return done(401);
         if (rows.affectedRows === 1){
+            console.log('here');
             done(201)
         } else{
             done(401);
@@ -110,7 +111,6 @@ exports.userLogin = function(auth, pass, type, done) {
             if (err) {
                 return done(400);
             };
-
             if (rows.length > 0) {
                 let userid = rows[0].user_id;
                 // Generate unique user token for session and place in database
@@ -120,7 +120,9 @@ exports.userLogin = function(auth, pass, type, done) {
                     "id": userid,
                     "token": token
                 });
-            } else return done(400);
+            } else {
+                return done(400);
+            }
         });
 
     } else if (type === 2) {
